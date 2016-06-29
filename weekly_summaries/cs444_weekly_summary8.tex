@@ -1,0 +1,51 @@
+\documentclass[letterpaper,10pt]{article}
+
+\usepackage{graphicx}                                        
+\usepackage{amssymb}                                         
+\usepackage{amsmath}                                         
+\usepackage{amsthm}                                          
+
+\usepackage{alltt}                                           
+\usepackage{float}
+\usepackage{color}
+\usepackage{url}
+
+\usepackage{balance}
+\usepackage[TABBOTCAP, tight]{subfigure}
+\usepackage{enumitem}
+\usepackage{pstricks, pst-node}
+
+\usepackage{geometry}
+\geometry{textheight=8.5in, textwidth=6in}
+
+\newcommand{\cred}[1]{{\color{red}#1}}
+\newcommand{\cblue}[1]{{\color{blue}#1}}
+
+\usepackage{hyperref}
+
+\def\name{Dylan Camus}
+
+%pull in the necessary preamble matter for pygments output
+\input{pygments.tex}
+
+% The following metadata will show up in the PDF properties
+\hypersetup{
+   colorlinks = false,
+   urlcolor = black,
+   pdfauthor = {\name},
+   pdfkeywords = {cs444 ``operating systems'' summary},
+   pdftitle = {CS 444 Weekly Summary: Week Eight},
+   pdfsubject = {CS 444 Weekly Summary: Week Eight},
+   pdfpagemode = UseNone
+}
+
+\parindent = 0.0 in
+\parskip = 0.1 in
+
+\title{CS444: Timers and The Page Cache}
+\author{Dylan Camus}
+\date{\today}
+\begin{document}
+\maketitle
+Robert Love's book, "Linux Kernel Development(2010)", chapters 11 and 16, asserts that timers and page cache in the Linux kernel are fundemental concepts to understanding how to program within the kernel. Love supports this claim by explaining how the kernel manages wall time and uptime with concepts such as timer interrupt, timer ticks, HZ, and jiffies, and how the kernel implements page cache to store data in memory to significantly improve the performance of the system by reducing the amount of disk I/O. Love's purpose is to give the reader a sense of how the kernel handles memory and filestystem management and how the concept of time and it's passing is handled within the kernel. Considering the technical language used in this chapter, Love is writing to an audience who already has an understanding of the basics of operating systems and is familiar with the C programming language.
+\end{document}

@@ -1,0 +1,451 @@
+From eb533f6faef9f1ac19e7b2d6d39adc21d5f985d0 Mon Sep 17 00:00:00 2001
+From: Dylan Camus <camusd@os-class.engr.oregonstate.edu>
+Date: Mon, 16 May 2016 23:02:46 -0700
+Subject: [PATCH 1/4] ready to create patch
+
+---
+ drivers/block/Kconfig    |   6 ++
+ drivers/block/Makefile   |   2 +
+ drivers/block/rdcrypto.c | 229 +++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 237 insertions(+)
+ create mode 100644 drivers/block/rdcrypto.c
+
+diff --git a/drivers/block/Kconfig b/drivers/block/Kconfig
+index 014a1cf..5eba25f 100644
+--- a/drivers/block/Kconfig
++++ b/drivers/block/Kconfig
+@@ -15,6 +15,12 @@ menuconfig BLK_DEV
+ 
+ if BLK_DEV
+ 
++config RDCRYPTO
++	tristate "RAMdisk with encryption"
++	---help---
++		This is a driver written by Dylan Camus. It is a RAMdisk.
++		It encrypts data when written to and decrypts data when read.
++ 
+ config BLK_DEV_NULL_BLK
+ 	tristate "Null test block driver"
+ 
+diff --git a/drivers/block/Makefile b/drivers/block/Makefile
+index 02b688d..58d6922 100644
+--- a/drivers/block/Makefile
++++ b/drivers/block/Makefile
+@@ -5,6 +5,8 @@
+ # Rewritten to use lists instead of if-statements.
+ # 
+ 
++obj-$(CONFIG_RDCRYPTO)		+= rdcrypto.ko
++
+ obj-$(CONFIG_MAC_FLOPPY)	+= swim3.o
+ obj-$(CONFIG_BLK_DEV_SWIM)	+= swim_mod.o
+ obj-$(CONFIG_BLK_DEV_FD)	+= floppy.o
+diff --git a/drivers/block/rdcrypto.c b/drivers/block/rdcrypto.c
+new file mode 100644
+index 0000000..5b7df51
+--- /dev/null
++++ b/drivers/block/rdcrypto.c
+@@ -0,0 +1,229 @@
++#include <linux/module.h>
++#include <linux/moduleparam.h>
++#include <linux/init.h>
++
++#include <linux/sched.h>
++#include <linux/kernel.h>	/* printk() */
++#include <linux/slab.h>		/* kmalloc() */
++#include <linux/fs.h>		/* everything... */
++#include <linux/errno.h>	/* error codes */
++#include <linux/timer.h>
++#include <linux/types.h>	/* size_t */
++#include <linux/fcntl.h>	/* O_ACCMODE */
++#include <linux/hdreg.h>	/* HDIO_GETGEO */
++#include <linux/kdev_t.h>
++#include <linux/vmalloc.h>
++#include <linux/genhd.h>
++#include <linux/blkdev.h>
++#include <linux/buffer_head.h>	/* invalidate_bdev */
++#include <linux/bio.h>
++#include <linux/crypto.h>
++
++MODULE_LICENSE("Dual BSD/GPL");
++
++
++static char *key = "placeholderkey";
++struct crypto_cipher *my_cipher; 
++static int rdcrypto_major = 0;
++module_param(rdcrypto_major, int, 0);
++static int logical_block_size = 512;
++module_param(logical_block_size, int, 0);
++static int nsectors = 1024;	/* How big the drive is */
++module_param(nsectors, int, 0);
++
++#define RDCRYPTO_CIPHER 	"aes"
++
++#define KERNEL_SECTOR_SIZE	512
++
++/*
++ * Our request queue.
++ */
++static struct request_queue *Queue;
++
++/*
++ * The internal representation of our device.
++ */
++struct rdcrypto_dev {
++        unsigned long size;             /* Device size in sectors */
++        u8 *data;                       /* The data array */
++        spinlock_t lock;                /* For mutual exclusion */
++        struct gendisk *gd;             /* The gendisk structure */
++} Device;
++
++static void hexdump(unsigned char *buf, unsigned int len)
++{
++	while(len--)
++		printk("%02x", *buf++);
++
++	printk("\n");
++}
++
++/*
++ * Handle an I/O request.
++ */
++static void
++rdcrypto_transfer(struct rdcrypto_dev *dev, unsigned long sector,
++		unsigned long nsect, char *buffer, int write)
++{
++	unsigned long offset = sector * KERNEL_SECTOR_SIZE;
++	unsigned long nbytes = nsect * KERNEL_SECTOR_SIZE;
++	int i;
++
++	if ((offset + nbytes) > dev->size) {
++		printk (KERN_NOTICE "Beyond-end write (%ld %ld)\n",
++		      offset, nbytes);
++		return;
++	}
++
++	/* initialize crypto */
++	crypto_cipher_clear_flags(my_cipher, ~0);
++	crypto_cipher_setkey(my_cipher, key, strlen(key));
++
++	if (write)
++	{
++		printk("RAM Disk is being written to\n");
++		printk("Data before encryption: ");
++		hexdump(buffer, nbytes);
++		for(i = 0; i < nbytes; i += 
++		      crypto_cipher_blocksize(my_cipher))
++		{
++			memset(dev->data + offset + i, 0,
++			      crypto_cipher_blocksize(my_cipher));
++			crypto_cipher_encrypt_one(my_cipher,
++			      dev->data + offset + i, buffer + i);
++		}
++		printk("Data after encryption: ");
++		hexdump(dev->data + offset, nbytes);
++	}
++	else
++	{
++		printk("RAM Disk is being read\n");
++		printk("Data before decryption: ");
++		hexdump(dev->data + offset, nbytes);
++		for(i = 0; i < nbytes; i +=
++		      crypto_cipher_blocksize(my_cipher))
++		{
++			crypto_cipher_decrypt_one(my_cipher,
++			      buffer + i, dev->data + offset + i);
++		}
++		printk("Data after decryption: ");
++		hexdump(buffer, nbytes);
++	}
++}
++
++/*
++ * The simple form of the request function.
++ */
++static void rdcrypto_request(struct request_queue *q)
++{
++	struct request *req;
++	req = blk_fetch_request(q);
++	while (req != NULL) {
++		//struct rdcrypto_dev *dev = req->rq_disk->private_data;
++		if (req == NULL || req->cmd_type != REQ_TYPE_FS) {
++			printk (KERN_NOTICE "Skip non-fs request\n");
++			__blk_end_request_cur(req, -EIO);
++			continue;
++		}
++		rdcrypto_transfer(&Device, blk_rq_pos(req),
++		      blk_rq_cur_sectors(req),
++				req->buffer, rq_data_dir(req));
++		if(! __blk_end_request_cur(req, 0))
++		{
++			req = blk_fetch_request(q);
++		}		
++	}
++}
++
++
++int
++rdcrypto_getgeo(struct block_device *block_device, struct hd_geometry *geo)
++{
++	long size;
++
++	size = Device.size * (logical_block_size / KERNEL_SECTOR_SIZE);
++	geo->cylinders = (size & ~0x3f) >> 6;
++	geo->heads = 4;
++	geo->sectors = 16;
++	geo->start = 0;
++	return 0;
++}
++
++/*
++ * The device operations structure.
++ */
++static struct block_device_operations rdcrypto_ops = {
++	.owner          = THIS_MODULE,
++	.getgeo		= rdcrypto_getgeo
++};
++
++static int __init rdcrypto_init(void)
++{
++   	/*
++	 * Set up our internal device.
++	 */ 
++   	Device.size = nsectors * logical_block_size;
++	spin_lock_init(&Device.lock);
++	Device.data = vmalloc(Device.size);
++	if(Device.data == NULL)
++	   	return -ENOMEN;
++	/*
++	 * Get a request queue.
++	 */ 
++	Queue = blk_init_queue(rdcrypto_request, &Device.lock);
++	if(Queue == NULL)
++	   	goto out;
++	blk_queue_logical_block_size(Queue, logical_block_size);
++	/*
++	 * Initialize crypto.
++	 */ 
++	tfm = crypto_alloc_ciphter(RDCRYPTO_CIPHER, 0, 0);
++	if(IS_ERR(tfm))
++	{
++		printk(KERN_ERR "rdcrypto: cipher allocation failure\n");
++		return PTR_ERR(tfm);
++	}
++	/*
++	 * Get registered.
++	 */
++	rdcypto_major = register_blkdev(rdcrypto_major, "rdcrypto");
++	if (rdcrypto_major <= 0) {
++		printk(KERN_WARNING "rdcrypto: "
++		      "unable to get major number\n");
++		goto out;
++	}
++	/*
++	 * And the gendisk structure.
++	 */
++	Device.gd = alloc_disk(16);
++	if(!Device.gd)
++	   	goto out_unregister;
++	Device.gd->major = rdcrypto_major;
++	Device.gd->first_minor = 0;
++	Device.gd->fops = &rdcrypto_ops;
++	Device.gd->private_data = &Device;
++	strcpy(Device.gd->disk_name, "rdcrypto0");
++	set_capacity(Device.gd, nsectors);
++	Device.gd->queue = Queue;
++	add_disk(Device.gd);
++
++	return 0;
++	       
++out_unregister:
++	unregister_blkdev(rdcrypto_major, "rdcrypto");
++out:
++	vfree(Device.data);
++	return -ENOMEM;
++}
++
++static void __exit rdcrypto_exit(void)
++{
++   	del_gendisk(Device.gd);
++	put_disk(Device.gd);
++	unregister_blkdev(rdcrypto_major, "rdcrypto");
++	blk_cleanup_queue(Queue);
++	vfree(Device.data);
++}
++	
++module_init(rdcrypto_init);
++module_exit(rdcrypto_exit);
+-- 
+1.7.12.4
+
+
+From 82194a8adf27b7bbd9e39b6537b05d18ad690610 Mon Sep 17 00:00:00 2001
+From: Dylan Camus <camusd@os-class.engr.oregonstate.edu>
+Date: Wed, 18 May 2016 18:10:57 -0700
+Subject: [PATCH 2/4] fixed some bugs
+
+---
+ drivers/block/Makefile   | 2 +-
+ drivers/block/rdcrypto.c | 8 ++++----
+ 2 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/block/Makefile b/drivers/block/Makefile
+index 58d6922..2ebc0e3 100644
+--- a/drivers/block/Makefile
++++ b/drivers/block/Makefile
+@@ -5,7 +5,7 @@
+ # Rewritten to use lists instead of if-statements.
+ # 
+ 
+-obj-$(CONFIG_RDCRYPTO)		+= rdcrypto.ko
++obj-$(CONFIG_RDCRYPTO)		+= rdcrypto.o
+ 
+ obj-$(CONFIG_MAC_FLOPPY)	+= swim3.o
+ obj-$(CONFIG_BLK_DEV_SWIM)	+= swim_mod.o
+diff --git a/drivers/block/rdcrypto.c b/drivers/block/rdcrypto.c
+index 5b7df51..127e08f 100644
+--- a/drivers/block/rdcrypto.c
++++ b/drivers/block/rdcrypto.c
+@@ -166,7 +166,7 @@ static int __init rdcrypto_init(void)
+ 	spin_lock_init(&Device.lock);
+ 	Device.data = vmalloc(Device.size);
+ 	if(Device.data == NULL)
+-	   	return -ENOMEN;
++	   	return -ENOMEM;
+ 	/*
+ 	 * Get a request queue.
+ 	 */ 
+@@ -177,11 +177,11 @@ static int __init rdcrypto_init(void)
+ 	/*
+ 	 * Initialize crypto.
+ 	 */ 
+-	tfm = crypto_alloc_ciphter(RDCRYPTO_CIPHER, 0, 0);
+-	if(IS_ERR(tfm))
++	mycipher = crypto_alloc_cipher(RDCRYPTO_CIPHER, 0, 0);
++	if(IS_ERR(my_cipher))
+ 	{
+ 		printk(KERN_ERR "rdcrypto: cipher allocation failure\n");
+-		return PTR_ERR(tfm);
++		return PTR_ERR(my_cipher);
+ 	}
+ 	/*
+ 	 * Get registered.
+-- 
+1.7.12.4
+
+
+From 23c34b65da46c1a6f2f0bd2fc906607c492a8a14 Mon Sep 17 00:00:00 2001
+From: Dylan Camus <camusd@os-class.engr.oregonstate.edu>
+Date: Wed, 18 May 2016 18:16:13 -0700
+Subject: [PATCH 3/4] fixed a small bug in rdcrypto
+
+---
+ drivers/block/rdcrypto.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/block/rdcrypto.c b/drivers/block/rdcrypto.c
+index 127e08f..3ddb0b62 100644
+--- a/drivers/block/rdcrypto.c
++++ b/drivers/block/rdcrypto.c
+@@ -177,7 +177,7 @@ static int __init rdcrypto_init(void)
+ 	/*
+ 	 * Initialize crypto.
+ 	 */ 
+-	mycipher = crypto_alloc_cipher(RDCRYPTO_CIPHER, 0, 0);
++	my_cipher = crypto_alloc_cipher(RDCRYPTO_CIPHER, 0, 0);
+ 	if(IS_ERR(my_cipher))
+ 	{
+ 		printk(KERN_ERR "rdcrypto: cipher allocation failure\n");
+@@ -186,7 +186,7 @@ static int __init rdcrypto_init(void)
+ 	/*
+ 	 * Get registered.
+ 	 */
+-	rdcypto_major = register_blkdev(rdcrypto_major, "rdcrypto");
++	rdcrypto_major = register_blkdev(rdcrypto_major, "rdcrypto");
+ 	if (rdcrypto_major <= 0) {
+ 		printk(KERN_WARNING "rdcrypto: "
+ 		      "unable to get major number\n");
+-- 
+1.7.12.4
+
+
+From 17c0796c8be46cc46930a56787234600f6968877 Mon Sep 17 00:00:00 2001
+From: Dylan Camus <camusd@os-class.engr.oregonstate.edu>
+Date: Wed, 18 May 2016 19:26:02 -0700
+Subject: [PATCH 4/4] finished debugging
+
+---
+ drivers/block/rdcrypto.c | 19 +++++--------------
+ 1 file changed, 5 insertions(+), 14 deletions(-)
+
+diff --git a/drivers/block/rdcrypto.c b/drivers/block/rdcrypto.c
+index 3ddb0b62..6b3a46d 100644
+--- a/drivers/block/rdcrypto.c
++++ b/drivers/block/rdcrypto.c
+@@ -2,25 +2,17 @@
+ #include <linux/moduleparam.h>
+ #include <linux/init.h>
+ 
+-#include <linux/sched.h>
+ #include <linux/kernel.h>	/* printk() */
+-#include <linux/slab.h>		/* kmalloc() */
+ #include <linux/fs.h>		/* everything... */
+ #include <linux/errno.h>	/* error codes */
+-#include <linux/timer.h>
+ #include <linux/types.h>	/* size_t */
+-#include <linux/fcntl.h>	/* O_ACCMODE */
+-#include <linux/hdreg.h>	/* HDIO_GETGEO */
+-#include <linux/kdev_t.h>
+ #include <linux/vmalloc.h>
+ #include <linux/genhd.h>
+ #include <linux/blkdev.h>
+-#include <linux/buffer_head.h>	/* invalidate_bdev */
+-#include <linux/bio.h>
+ #include <linux/crypto.h>
+ 
+ MODULE_LICENSE("Dual BSD/GPL");
+-
++static char *Version = "1.4";
+ 
+ static char *key = "placeholderkey";
+ struct crypto_cipher *my_cipher; 
+@@ -43,7 +35,7 @@ static struct request_queue *Queue;
+ /*
+  * The internal representation of our device.
+  */
+-struct rdcrypto_dev {
++static struct rdcrypto_dev {
+         unsigned long size;             /* Device size in sectors */
+         u8 *data;                       /* The data array */
+         spinlock_t lock;                /* For mutual exclusion */
+@@ -119,7 +111,6 @@ static void rdcrypto_request(struct request_queue *q)
+ 	struct request *req;
+ 	req = blk_fetch_request(q);
+ 	while (req != NULL) {
+-		//struct rdcrypto_dev *dev = req->rq_disk->private_data;
+ 		if (req == NULL || req->cmd_type != REQ_TYPE_FS) {
+ 			printk (KERN_NOTICE "Skip non-fs request\n");
+ 			__blk_end_request_cur(req, -EIO);
+@@ -127,8 +118,8 @@ static void rdcrypto_request(struct request_queue *q)
+ 		}
+ 		rdcrypto_transfer(&Device, blk_rq_pos(req),
+ 		      blk_rq_cur_sectors(req),
+-				req->buffer, rq_data_dir(req));
+-		if(! __blk_end_request_cur(req, 0))
++		      req->buffer, rq_data_dir(req));
++		if(!__blk_end_request_cur(req, 0))
+ 		{
+ 			req = blk_fetch_request(q);
+ 		}		
+@@ -187,7 +178,7 @@ static int __init rdcrypto_init(void)
+ 	 * Get registered.
+ 	 */
+ 	rdcrypto_major = register_blkdev(rdcrypto_major, "rdcrypto");
+-	if (rdcrypto_major <= 0) {
++	if (rdcrypto_major < 0) {
+ 		printk(KERN_WARNING "rdcrypto: "
+ 		      "unable to get major number\n");
+ 		goto out;
+-- 
+1.7.12.4
+

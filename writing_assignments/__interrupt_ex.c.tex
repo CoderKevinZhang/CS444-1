@@ -1,0 +1,6 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PY{k}{if} \PY{p}{(}\PY{n}{request\PYZus{}irq}\PY{p}{(}\PY{n}{irqn}\PY{p}{,} \PY{n}{my\PYZus{}interrupt}\PY{p}{,} \PY{n}{IRQF\PYZus{}SHARED}\PY{p}{,} \PY{l+s}{"}\PY{l+s}{my\PYZus{}device}\PY{l+s}{"}\PY{p}{,} \PY{n}{my\PYZus{}dev}\PY{p}{)}\PY{p}{)} \PY{p}{\PYZob{}}
+   \PY{n}{printk}\PY{p}{(}\PY{n}{KERN\PYZus{}ERR} \PY{l+s}{"}\PY{l+s}{my\PYZus{}device: cannot register IRQ \PYZpc{}d}\PY{l+s+se}{\PYZbs{}n}\PY{l+s}{"}\PY{p}{,} \PY{n}{irqn}\PY{p}{)}\PY{p}{;}
+   \PY{k}{return} \PY{o}{-}\PY{n}{EIO}\PY{p}{;}
+\PY{p}{\PYZcb{}}
+\end{Verbatim}

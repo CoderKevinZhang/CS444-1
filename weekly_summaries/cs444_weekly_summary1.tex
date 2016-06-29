@@ -1,0 +1,48 @@
+\documentclass[letterpaper,10pt]{article}
+
+\usepackage{graphicx}                                        
+\usepackage{amssymb}                                         
+\usepackage{amsmath}                                         
+\usepackage{amsthm}                                          
+
+\usepackage{alltt}                                           
+\usepackage{float}
+\usepackage{color}
+\usepackage{url}
+
+\usepackage{balance}
+\usepackage[TABBOTCAP, tight]{subfigure}
+\usepackage{enumitem}
+\usepackage{pstricks, pst-node}
+
+\usepackage{geometry}
+\geometry{textheight=8.5in, textwidth=6in}
+
+\newcommand{\cred}[1]{{\color{red}#1}}
+\newcommand{\cblue}[1]{{\color{blue}#1}}
+
+\usepackage{hyperref}
+
+\def\name{Dylan Camus}
+
+%pull in the necessary preamble matter for pygments output
+\input{pygments.tex}
+
+% The following metadata will show up in the PDF properties
+\hypersetup{
+   colorlinks = false,
+   urlcolor = black,
+   pdfauthor = {\name},
+   pdfkeywords = {cs444 ``operating systems'' summary},
+   pdftitle = {CS 444 Weekly Summary: Week One},
+   pdfsubject = {CS 444 Weekly Summary: Week One},
+   pdfpagemode = UseNone
+}
+
+\parindent = 0.0 in
+\parskip = 0.1 in
+
+\begin{document}
+\section{Weekly Summary: Week One}
+Robert Love's book, "Linux Kernel Development(2010)", chapters one and two, asserts that the Linux kernel, while reasonably complex, is not overly complicated and can be understood through careful dissection of its concepts and subsystems. Love supports this claim by giving a brief history of the Linux kernel and a short tutorial on how the kernel works and the design decisions behind them. Love's purpose is to present an overview of the Linux kernel at a high level in order to prepare readers for more in depth chapters later on. Considering the technical language used in the chapters, Love is writing to an audience who already has an understanding of the basics of operating systems and is familiar with the C programming language.
+\end{document}

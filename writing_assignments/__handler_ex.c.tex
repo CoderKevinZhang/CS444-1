@@ -1,0 +1,28 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PY{k}{static} \PY{n}{irqreturn\PYZus{}t} \PY{n+nf}{rtc\PYZus{}interrupt}\PY{p}{(}\PY{k+kt}{int} \PY{n}{irq}\PY{p}{,} \PY{k+kt}{void} \PY{o}{*}\PY{n}{dev}\PY{p}{)}
+\PY{p}{\PYZob{}}
+   \PY{c+cm}{/*}
+\PY{c+cm}{    * * Can be an alarm interrupt, update complete interrupt,}
+\PY{c+cm}{    * * or a periodic interrupt. We store the status in the}
+\PY{c+cm}{    * * low byte and the number of interrupts received since}
+\PY{c+cm}{    * * the last read in the remainder of rtc\PYZus{}irq\PYZus{}data.}
+\PY{c+cm}{    * */}
+   \PY{n}{spin\PYZus{}lock}\PY{p}{(}\PY{o}{&}\PY{n}{rtc\PYZus{}lock}\PY{p}{)}\PY{p}{;}
+   \PY{n}{rtc\PYZus{}irq\PYZus{}data} \PY{o}{+}\PY{o}{=} \PY{l+m+mh}{0x100}\PY{p}{;}
+   \PY{n}{rtc\PYZus{}irq\PYZus{}data} \PY{o}{&}\PY{o}{=} \PY{o}{\PYZti{}}\PY{l+m+mh}{0xff}\PY{p}{;}
+   \PY{n}{rtc\PYZus{}irq\PYZus{}data} \PY{o}{|}\PY{o}{=} \PY{p}{(}\PY{n}{CMOS\PYZus{}READ}\PY{p}{(}\PY{n}{RTC\PYZus{}INTR\PYZus{}FLAGS}\PY{p}{)} \PY{o}{&} \PY{l+m+mh}{0xF0}\PY{p}{)}\PY{p}{;}
+   \PY{k}{if} \PY{p}{(}\PY{n}{rtc\PYZus{}status} \PY{o}{&} \PY{n}{RTC\PYZus{}TIMER\PYZus{}ON}\PY{p}{)}
+      \PY{n}{mod\PYZus{}timer}\PY{p}{(}\PY{o}{&}\PY{n}{rtc\PYZus{}irq\PYZus{}timer}\PY{p}{,} \PY{n}{jiffies} \PY{o}{+} \PY{n}{HZ}\PY{o}{/}\PY{n}{rtc\PYZus{}freq} \PY{o}{+} \PY{l+m+mi}{2}\PY{o}{*}\PY{n}{HZ}\PY{o}{/}\PY{l+m+mi}{100}\PY{p}{)}\PY{p}{;}
+   \PY{n}{spin\PYZus{}unlock}\PY{p}{(}\PY{o}{&}\PY{n}{rtc\PYZus{}lock}\PY{p}{)}\PY{p}{;}
+   \PY{c+cm}{/*}
+\PY{c+cm}{    * * Now do the rest of the actions}
+\PY{c+cm}{    * */}
+   \PY{n}{spin\PYZus{}lock}\PY{p}{(}\PY{o}{&}\PY{n}{rtc\PYZus{}task\PYZus{}lock}\PY{p}{)}\PY{p}{;}
+   \PY{k}{if} \PY{p}{(}\PY{n}{rtc\PYZus{}callback}\PY{p}{)}
+      \PY{n}{rtc\PYZus{}callback}\PY{o}{-}\PY{o}{>}\PY{n}{func}\PY{p}{(}\PY{n}{rtc\PYZus{}callback}\PY{o}{-}\PY{o}{>}\PY{n}{private\PYZus{}data}\PY{p}{)}\PY{p}{;}
+   \PY{n}{spin\PYZus{}unlock}\PY{p}{(}\PY{o}{&}\PY{n}{rtc\PYZus{}task\PYZus{}lock}\PY{p}{)}\PY{p}{;}
+   \PY{n}{wake\PYZus{}up\PYZus{}interruptible}\PY{p}{(}\PY{o}{&}\PY{n}{rtc\PYZus{}wait}\PY{p}{)}\PY{p}{;}
+   \PY{n}{kill\PYZus{}fasync}\PY{p}{(}\PY{o}{&}\PY{n}{rtc\PYZus{}async\PYZus{}queue}\PY{p}{,} \PY{n}{SIGIO}\PY{p}{,} \PY{n}{POLL\PYZus{}IN}\PY{p}{)}\PY{p}{;}
+   \PY{k}{return} \PY{n}{IRQ\PYZus{}HANDLED}\PY{p}{;}
+\PY{p}{\PYZcb{}}
+\end{Verbatim}

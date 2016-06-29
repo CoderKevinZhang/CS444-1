@@ -1,0 +1,135 @@
+\documentclass[journal,letterpaper,draftclsnofoot,onecolumn,10pt]{IEEEtran}
+
+\usepackage{graphicx}                                        
+\usepackage{amssymb}                                         
+\usepackage{amsmath}                                         
+\usepackage{amsthm}                                          
+
+\usepackage{alltt}                                           
+\usepackage{float}
+\usepackage{color}
+\usepackage{url}
+
+\usepackage{balance}
+\usepackage[TABBOTCAP, tight]{subfigure}
+\usepackage{enumitem}
+\usepackage{pstricks, pst-node}
+
+\usepackage{geometry}
+\geometry{textheight=8.5in, textwidth=6in}
+
+\newcommand{\cred}[1]{{\color{red}#1}}
+\newcommand{\cblue}[1]{{\color{blue}#1}}
+
+\usepackage{hyperref}
+
+\def\name{Dylan Camus}
+
+%pull in the necessary preamble matter for pygments output
+\input{pygments.tex}
+
+% The following metadata will show up in the PDF properties
+\hypersetup{
+   colorlinks = false,
+   urlcolor = black,
+   pdfauthor = {\name},
+   pdfkeywords = {cs444 ``operating systems'' ``project one''},
+   pdftitle = {CS 444 Project 1 Writeup},
+   pdfsubject = {CS 444 Project 1 Writeup},
+   pdfpagemode = UseNone
+}
+
+\parindent = 0.0 in
+\parskip = 0.1 in
+
+\begin{document}
+\begin{titlepage}
+
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % Defines a new command for the horizontal lines, change thickness here
+
+\center % Center everything on the page
+ 
+%---------------------------------------------------------------------------
+%	HEADING SECTIONS
+%---------------------------------------------------------------------------
+
+\textsc{\LARGE Oregon State University}\\[1.5cm] % Name of your university/college
+\textsc{\Large Operating Systems II}\\[0.5cm] % Major heading such as course name
+\textsc{\large CS444}\\[0.5cm] % Minor heading such as course title
+
+%---------------------------------------------------------------------------
+%	TITLE SECTION
+%---------------------------------------------------------------------------
+
+\HRule \\[0.4cm]
+{ \huge \bfseries Project 2 Writeup}\\[0.4cm] % Title of your document
+\HRule \\[1.5cm]
+ 
+%---------------------------------------------------------------------------
+%	AUTHOR SECTION
+%---------------------------------------------------------------------------
+
+\begin{minipage}{0.4\textwidth}
+   \begin{flushleft} \large
+      \emph{Author:}\\
+      Dylan \textsc{Camus} % Your name
+   \end{flushleft}
+\end{minipage}
+~
+\begin{minipage}{0.4\textwidth}
+   \begin{flushright} \large
+      \emph{Professor:} \\
+      Dr. Kevin \textsc{McGrath} % Supervisor's Name
+   \end{flushright}
+\end{minipage}\\[4cm]
+
+% If you don't want a supervisor, uncomment the two lines below and remove the section above
+%\Large \emph{Author:}\\
+%John \textsc{Smith}\\[3cm] % Your name
+
+%---------------------------------------------------------------------------
+%	DATE SECTION
+%---------------------------------------------------------------------------
+
+{\large \today}\\[3cm] % Date, change the \today to a set date if you want to be precise
+
+%---------------------------------------------------------------------------
+%	ABSTRACT SECTION
+%---------------------------------------------------------------------------
+\begin{abstract}
+This project involved the exploring the uses of pthreads to solve concurrency problems. Specifically, the producer consumer problem was implemented using pthreads. Additionally, the Linux kernel was installed and run on the qemu virtual machine.
+\end{abstract}
+
+\vfill % Fill the rest of the page with whitespace
+
+\pagebreak
+
+\end{titlepage}
+
+\section{Design}
+The overall structure of the SSTF scheduler is very similar to the Noop scheduler. The main difference is in the request adding function. This function will need to be changed so that it sorts based on shortest seek time. This can be accomplished by itterating over the queue of requests using list\_for\_each and calling rq\_end\_sector in order to compare the new request to be added with the queue of requests and place the new request into the queue at the correct location. This location will be when the right in front of the first request with a longer seek time than the new request. Thus, the queue is kept in sorted order such that the shortest seek time request is always in front of the queue.
+\section{Questions}
+\subsection{What do you think the main point of this assignment is?}
+I think the main point of the assignment was to become familiar with the idea of patching the Linux kernel and to take a look at how modules are loaded into the kernel. Also, it obviously was meant to teach us about I/O schedulers.
+\subsection{How did you personally approach the problem? Design decisions, algorithm, etc.}
+I approached the problem by researching what SSTF algorithm requires. Once I had a solid base of knowledge, the algorithm was rather simple.
+\subsection{How did you ensure your solution was correct? Testing details, for instance.}
+I ensured my solution was correct by using print statements to show when my scheduler was reaching certain points within it's functions and to see when it was reading or writing.
+\subsection{What did you learn?}
+I learned how to make Linux patch files, how to configure a module in Linux, and how to write an I\\O scheduler.
+
+\section{Work Log}
+
+\begin{figure}[h]
+   \begin{tabular}{c | c | c}
+      Date & Hours & Detail\\
+      \hline
+      4/26 & 4 & I researched the SSTF algorithm and worked on the code\\
+      \hline
+      4/27 & 10 I struggled to get the scheduler to run in qemu\\
+      \hline
+   \end{tabular}
+   \caption{Dates and number of hours spent working on project 2}
+\end{figure}
+      
+\end{document}

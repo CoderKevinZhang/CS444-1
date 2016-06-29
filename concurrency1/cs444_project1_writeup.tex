@@ -1,0 +1,241 @@
+\documentclass[letterpaper,draftclsnofoot,onecolumn,10pt]{article}
+
+\usepackage{graphicx}                                        
+\usepackage{amssymb}                                         
+\usepackage{amsmath}                                         
+\usepackage{amsthm}                                          
+
+\usepackage{alltt}                                           
+\usepackage{float}
+\usepackage{color}
+\usepackage{url}
+
+\usepackage{balance}
+\usepackage[TABBOTCAP, tight]{subfigure}
+\usepackage{enumitem}
+\usepackage{pstricks, pst-node}
+
+\usepackage{geometry}
+\geometry{textheight=8.5in, textwidth=6in}
+
+\newcommand{\cred}[1]{{\color{red}#1}}
+\newcommand{\cblue}[1]{{\color{blue}#1}}
+
+\usepackage{hyperref}
+
+\def\name{Dylan Camus}
+
+%pull in the necessary preamble matter for pygments output
+\input{pygments.tex}
+
+% The following metadata will show up in the PDF properties
+\hypersetup{
+   colorlinks = false,
+   urlcolor = black,
+   pdfauthor = {\name},
+   pdfkeywords = {cs444 ``operating systems'' ``project one''},
+   pdftitle = {CS 444 Project 1 Writeup},
+   pdfsubject = {CS 444 Project 1 Writeup},
+   pdfpagemode = UseNone
+}
+
+\parindent = 0.0 in
+\parskip = 0.1 in
+
+\begin{document}
+\begin{titlepage}
+
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % Defines a new command for the horizontal lines, change thickness here
+
+\center % Center everything on the page
+ 
+%---------------------------------------------------------------------------
+%	HEADING SECTIONS
+%---------------------------------------------------------------------------
+
+\textsc{\LARGE Oregon State University}\\[1.5cm] % Name of your university/college
+\textsc{\Large Operating Systems II}\\[0.5cm] % Major heading such as course name
+\textsc{\large CS444}\\[0.5cm] % Minor heading such as course title
+
+%---------------------------------------------------------------------------
+%	TITLE SECTION
+%---------------------------------------------------------------------------
+
+\HRule \\[0.4cm]
+{ \huge \bfseries Project 1 Writeup}\\[0.4cm] % Title of your document
+\HRule \\[1.5cm]
+ 
+%---------------------------------------------------------------------------
+%	AUTHOR SECTION
+%---------------------------------------------------------------------------
+
+\begin{minipage}{0.4\textwidth}
+   \begin{flushleft} \large
+      \emph{Author:}\\
+      Dylan \textsc{Camus} % Your name
+   \end{flushleft}
+\end{minipage}
+~
+\begin{minipage}{0.4\textwidth}
+   \begin{flushright} \large
+      \emph{Professor:} \\
+      Dr. Kevin \textsc{McGrath} % Supervisor's Name
+   \end{flushright}
+\end{minipage}\\[4cm]
+
+% If you don't want a supervisor, uncomment the two lines below and remove the section above
+%\Large \emph{Author:}\\
+%John \textsc{Smith}\\[3cm] % Your name
+
+%---------------------------------------------------------------------------
+%	DATE SECTION
+%---------------------------------------------------------------------------
+
+{\large \today}\\[3cm] % Date, change the \today to a set date if you want to be precise
+
+%---------------------------------------------------------------------------
+%	ABSTRACT SECTION
+%---------------------------------------------------------------------------
+\begin{abstract}
+This project involved the exploring the uses of pthreads to solve concurrency problems. Specifically, the producer consumer problem was implemented using pthreads. Additionally, the Linux kernel was installed and run on the qemu virtual machine.
+\end{abstract}
+
+\vfill % Fill the rest of the page with whitespace
+
+\pagebreak
+
+\end{titlepage}
+
+\section{Commands Used}
+
+\begin{figure}[h]
+   \begin{center}
+      \begin{tabular}{| c |}
+	 \hline
+	 \textbf{Command} \\
+	 \hline
+	 git clone git://git.yoctoproject.org/linux-yocto-3.14 \\
+	 \hline
+	 git checkout tags/v3.14.26 \\
+	 \hline
+	 source /scratch/opt/environment-setup-i586-poky-linux.csh \\
+	 \hline
+	 cp /scratch/spring2016/files/bzImage-qemux86.bin \\
+	 /scratch/spring2016/cs444-014/linux-yocto-3.14 \\
+	 \hline
+	 cp /scratch/spring2016/files/core-image-lsb-sdk-qemux86.ext3 \\
+	 \hline
+	 cp /scratch/spring2016/files/config-3.14.26-yocto-qemu \\
+	 /scratch/spring2016/cs444-014/linux-yocto-3.14/.config \\
+	 \hline
+	 qemu-system-i386 -gdb tcp::5514 -S -nographic -kernel \\
+	 bzImage-qemux86.bin -drive file=core-image-lsb-sdk-qemux86.ext3, \\
+	 if=virtio -enable-kvm -net noe -usb -localtime --no-reboot \\
+	 --append "root=/dev/vda rw console=tty50 debug" \\
+	 \hline
+	 \$GDB \\
+	 \hline
+	 remote target :5514 \\
+	 \hline
+	 continue \\
+	 \hline
+      \end{tabular}
+   \end{center}
+   \caption{This table includes every command used to get the kernel running}
+\end{figure}
+
+\section{Qemu Flags}
+
+\textbf{'-gdb tcp::5514'}
+\newline
+This flag tells qemu to wait for a gdb connection from port 5514
+
+\textbf{'-S'}
+\newline
+Do not start CPU on startup
+
+\textbf{'-nographic'}
+\newline
+Disables SDL display through VGA output. This makes qemu a simple command line application
+
+\textbf{'-kernel bzImage-qemux86.bin'}
+\newline
+Use bzImage-qemux86.bin as the kernel image
+
+\textbf{'-drive file=core-image-lsb-sdk-qemux86.ext3,if=virtio'}
+\newline
+This tells qemu to use core-image-lsb-sdk-qemux86.ext3 as it's disk image. It also says that the drive is connected on a virtio interface.
+
+\textbf{'-enable-kvm'}
+\newline
+Enable KVM full virtualization support.
+
+\textbf{'-net none'}
+\newline
+This indicates that no network devices are to be configured
+
+\textbf{'-usb'}
+\newline
+This enables the USB driver
+
+\textbf{'-localtime'}
+\newline
+Sets localtime
+
+\textbf{'--no reboot'}
+\newline
+Tells qemu to exit instead of rebooting
+
+\textbf{'--append "root=/dev/vda rw console=ttyS0 debug"'}
+\newline
+Tells qemu to use root=/dev/vda as cmdline
+
+\section{Concurrency Writeup}
+
+The concurrency assignment is the classic consumer producer multi-process synchonization problem. In the problem, there are two processes, the producer and the consumer. Both the producer and the consumer share a common buffer. The buffer is implemented as a queue. The producer generates data and puts it into the buffer. At the same time, the consumer consumes this data, thus removing it from the buffer. In this specific implementation the producer and consumer take a randomly generated amount of time to produce and consume. Therefore, there is a possibility that the buffer may be either full or empty at any givin point. The solution to this problem is to have the producer block when the buffer is full until the consumer notifies it that it has consumed from the buffer and that the buffer is no longer full. Additionally, the consumer must block when the buffer is empty until the producer has notified it that it has produced an item.
+
+There are a few considerations that need to be made for this problem. For example, it is possible for the producer to preempt the consumer after the consumer has checked if the buffer is empty, thus causing the consumer to not wake up. This is solved by using a mutex. The mutex enforces mutual exclusion of the buffer during these checks to prevent possible race conditions. 
+
+\section{Concurrency Questions}
+
+\subsection{What do you think the main point of this assignment is?}
+
+I believe that the main purpose of the assignment was to explore concurrency, which is a major concept within operating systems. Operating sytems are by design made to run many processes at the same time. Many of these processes need access to the same resources. This project allowed me to understand how the operating system allows multiple processes to be running at the same time and accessing the same resources without causing race conditions.
+
+\subsection{How did you personally approach the problem? Design decisions, algorithm, etc.}
+
+My approach was simple. First, I found an implementation for a queue, which I used for the buffer. Then, I created two functions, producer and consumer. The producer will check if the buffer is full. If it is, it blocks until the consumer signals to it that the buffer is no longer full and production can resume. The consumer acts in a similar way, except it blocks when the buffer is empty and waits for the producer to signal to it that there are items in the buffer ready to be consumed. In between checking if the buffer is full or empty and actually writing data to it, the buffer is locked through use of a Mutex. This prevents the buffer from changing states in between reading and writing to the buffer.
+
+\subsection{How did you ensure your solution was correct? Testing details, for instance.}
+
+I tested my solution by writing tests that ran the program with different inputs. For example, my tests would try running with a very small buffer, or a very large buffer (with smaller sleep times to make the test run faster). This was to help test the buffer full case. I also tested static sleep times for both the producer and the consumer. For example, I tested what would happen if the producer always took longer than the consumer, and vice versa.
+
+\subsection{What did you learn?}
+
+I learned how to use pthreads to create concurrency within a c program. I also learned how to debug multithreading based bugs. Finally, I learned that assignments in cs444 are more difficult than they appear, and I will be sure to utilize all the given time for my future assignments to avoid having to scramble at the last minute.
+
+\section{Version Control Log}
+
+\begin{figure}[h]
+   \input{changelog.tex}
+   \caption{Git commit log}
+\end{figure}
+
+\section{Work Log}
+
+\begin{figure}[h]
+   \begin{tabular}{c | c}
+      Date & Hours \\
+      \hline
+      4/9 & 2 \\
+      \hline
+      4/10 & 2 \\
+      \hline
+      4/11 & 5 \\
+      \hline
+      4/12 & 5 \\
+   \end{tabular}
+   \caption{Dates and number of hours spent working on project 1}
+\end{figure}
+      
+\end{document}

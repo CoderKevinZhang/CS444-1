@@ -1,0 +1,182 @@
+\documentclass[journal,letterpaper,draftclsnofoot,onecolumn,10pt]{IEEEtran}
+
+\usepackage{graphicx}                                        
+\usepackage{amssymb}                                         
+\usepackage{amsmath}                                         
+\usepackage{amsthm}                                          
+
+\usepackage{alltt}                                           
+\usepackage{float}
+\usepackage{color}
+\usepackage{url}
+
+\usepackage{balance}
+\usepackage[TABBOTCAP, tight]{subfigure}
+\usepackage{enumitem}
+\usepackage{pstricks, pst-node}
+
+\usepackage{geometry}
+\geometry{textheight=8.5in, textwidth=6in}
+
+\newcommand{\cred}[1]{{\color{red}#1}}
+\newcommand{\cblue}[1]{{\color{blue}#1}}
+
+\usepackage{hyperref}
+
+\def\name{Dylan Camus}
+
+%pull in the necessary preamble matter for pygments output
+\input{pygments.tex}
+
+% The following metadata will show up in the PDF properties
+\hypersetup{
+   colorlinks = false,
+   urlcolor = black,
+   pdfauthor = {\name},
+   pdfkeywords = {cs444 ``operating systems'' writing},
+   pdftitle = {CS 444 Writing Assignment 1},
+   pdfsubject = {CS 444 Writing Assignment 1},
+   pdfpagemode = UseNone
+}
+
+\parindent = 0.0 in
+\parskip = 0.1 in
+
+\begin{document}
+\begin{titlepage}
+
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % Defines a new command for the horizontal lines, change thickness here
+
+\center % Center everything on the page
+ 
+%---------------------------------------------------------------------------
+%	HEADING SECTIONS
+%---------------------------------------------------------------------------
+
+\textsc{\LARGE Oregon State University}\\[1.5cm] % Name of your university/college
+\textsc{\Large Operating Systems II}\\[0.5cm] % Major heading such as course name
+\textsc{\large CS444}\\[0.5cm] % Minor heading such as course title
+
+%---------------------------------------------------------------------------
+%	TITLE SECTION
+%---------------------------------------------------------------------------
+
+\HRule \\[0.4cm]
+{ \huge \bfseries Comparing I/O Devices and I/O Scheduling of Windows and FreeBSD to Linux}\\[0.4cm] % Title of your document
+\HRule \\[1.5cm]
+ 
+%---------------------------------------------------------------------------
+%	AUTHOR SECTION
+%---------------------------------------------------------------------------
+
+\begin{minipage}{0.4\textwidth}
+   \begin{flushleft} \large
+      \emph{Author:}\\
+      Dylan \textsc{Camus} % Your name
+   \end{flushleft}
+\end{minipage}
+~
+\begin{minipage}{0.4\textwidth}
+   \begin{flushright} \large
+      \emph{Professor:} \\
+      Dr. Kevin \textsc{McGrath} % Supervisor's Name
+   \end{flushright}
+\end{minipage}\\[4cm]
+
+% If you don't want a supervisor, uncomment the two lines below and remove the section above
+%\Large \emph{Author:}\\
+%John \textsc{Smith}\\[3cm] % Your name
+
+%---------------------------------------------------------------------------
+%	DATE SECTION
+%---------------------------------------------------------------------------
+
+{\large \today}\\[3cm] % Date, change the \today to a set date if you want to be precise
+
+%---------------------------------------------------------------------------
+%	ABSTRACT SECTION
+%---------------------------------------------------------------------------
+\begin{abstract}
+The goal of this paper is to look at the Windows and FreeBSD operating systems and compare their similarities and differences to the Linux operating system. These operating systems are compared based on three catagories. These catagories are I/O devices and I/O schedulers.
+\end{abstract}
+
+\vfill % Fill the rest of the page with whitespace
+
+\pagebreak
+
+\end{titlepage}
+
+\setlength{\parindent}{3ex}
+
+\section{Introduction}
+Some of the fundemental concepts of an operating system is how it handles I/O from devices and I/O scheduling. In this paper, I will take a closer look at how these concepts are implemented in both the Windows and FreeBSD operating systems. I will then examine the ways in which each compares to Linux.
+
+\section{Windows}
+
+\subsection{I/O Overview}
+The components that make up the I/O system in Windows are the I/O manager and device drivers. The I/O manager is the core of the I/O system. It defines the model for which I/O requests are delivered to device drivers. I/O in windows is packet driven. I/O requests are represented as an I/O request packet. This format allows a thread to manage multiple I/O requests at the same time. Additionally, the I/O manager also has common functions that are used by various device drivers for I/O processing. This centralization allows the drivers themselves to be much simpler in design.\cite{2ris12}
+
+I/O in Windows starts when an application executes an I/O function. The I/O manager treats the I/O as if it were a file. This abstraction is known as a virtual file. Thus, it is the drivers job to convert device specific commands into a file-like structure that the I/O manager can read. Then, the I/O manager dynamically directs the virtual file to the device driver.\cite{2ris12}
+
+In order to allow the I/O manager to communicate with a device, a device driver is needed to manage the device and communicate with the I/O manager in a way in which it understands. A WDM driver is a driver that follows the Windows Driver Model (WDM). There are three types of WDM drivers: the bus driver, which managers a logical or physical bus; the function driver, which exports the operational interface of the device to the operating system; and the filter driver, which changes the behavior of a device or driver.\cite{2ris12}
+
+\subsection{I/O Scheduling}
+Windows uses a priority system to help foreground I/O operations to get prefered over background operations. Two of the concepts that implement this behavior are I/O priority and I/O bandwidth reservations.\cite{2ris12}
+
+The Windows I/O manager supports five levels of I/O priority. These levels are critical, high, normal, low, and very low. Every I/O request has a default priority of normal. Background operations have their priority set to very low. These priority levels are devided into two I/O prioritization modes. These modes are called strategies. The two strategies are the hierarchy prioratization and the idle prioritization strategies.
+
+The hierarchy prioritization stategy deals with all I/O except very low priority I/O. It does as its name expects and services I/O in the order of the I/O's priority, starting with very high priority I/O, then high priority I/O, and so on. The idle strategy, however, works differently. One problem that arises with the hierarchy prioritization is that idle I/O is likely to be starved. The idle stategy deals with this by using a timer to monitor the queue and guarantee that at least one very low priority item eventually will get serviced.\cite{2ris12}
+
+\section{FreeBSD}
+
+\subsection{I/O Overview}
+In FreeBSD, all I/O is done using descriptors for user processes. A descriptor is an unsigned integer that is obtained from the open and socket system calls. FreeBSD supports seven kinds of objects that are represtented as descriptors. They are: files, pipes, fifos, sockets, POSIX IPCs, event queues, and processes. Devices in FreeBSD are accessed in the same way as regular files using the same system calls. Devices such as terminals, printers, and tape drivers are all accessed just as normal files are accessed.\cite{mn15}
+
+There are three main kinds of I/O in FreeBSD. The first is the character-device interface. A character-device interface maps the hardware interface into a byte stream. An example of adevice that is character devices is a terminal. Disks can also be implemented as a character device. These are known as raw-devices. Raw-devices are tasked with directly arranging I/O to and from the device.\cite{mn15}
+
+\begin{figure}[H]
+   \input{__char_dev.c.tex}
+   \caption{This is an example of the data structure used by a simple character device implemented in FreeBSD.}
+\end{figure}
+
+An interesting aspect of raw-devices is that they bypass kernel buffers. This eliminates memory to memory copying, which improves performance but also denies the application the benefit of data chaching. This means that raw-devices must manage their own buffers.\cite{mn15}
+
+\begin{figure}[H]
+   \input{__physio.c.tex}
+   \caption{This is a pseudo-code example of the physio raw-device algorithm for buffer management. It requests the hardware device to transfer data directly to or from the data buffer. This buffer lives in user space. It checks to make sure the buffer is accessible and locks the buffer while using it.}
+\end{figure}
+
+The other types of devices in FreeBSD are disk devices and network devices. Disk devices are almost identical to character devices but differ in their sorting algorithms. Network devices are devices that are responsible for taking network data as packets and transmitting or receiving them. Network devices are completely asynchronous. Thus, they receive data as soon as it arrives without having to wait on anything else.\cite{mn15}
+
+\subsection{I/O Scheduling}
+
+\begin{figure}[H]
+   \input{__disksort.c.tex}
+   \caption{This is a pseudo-code example of the disksort algorithm in FreeBSD. This algorithm keeps two queues of requests and keeps them in order by their block number. One queue is kept as the active list, while the other is the next-pass list. The front of the active list is the current position of the drive. The next-pass list is only populated when the active list is not empty, and then it is only populated with requests that are before the front of the active list. Once the active list has been completely serviced, the next-pass list becomes the new active list and a new next-pass list is created.}
+\end{figure}
+
+\section{Comparisons to Linux}
+
+I/O in Linux is made up of what is known as the block I/O layer. The basic container for block I/O is the bio structure. This structure represents block I/O operations that are active.
+
+\begin{figure}[H]
+   \input{__bio.c.tex}
+   \caption{This is an example of the linux bio structure. This structure is the basic container for block I/O within the Linux kernel.}
+\end{figure}
+
+I/O requests are stored in a request queue when they are pending. The request queue is implemented as a doubly linked list. I/O scheduling is handled by one of Linux's various I/O schedulers. The I/O scheduler performs merging and sorting on the pending requests in order to reduce the amount of time waiting for the device head to move from location to location and to improve fairness. The default I/O scheduler of Linux is the completely fair I/O scheduler. This scheduler assigns incoming I/O requests to specific queues based on the process originating the I/O request. Then, within each queue the requests are sorted based on their location on the disk. Each queue is then sorted round robin style.\cite{l05}
+
+As can be seen by the different implementations if I/O between Windows, FreeBSD, and Linux, none of them are alike. The closest comparison is with Linux and FreeBSD, which both have a similar structure for I/O requests and a somewhat similar scheduler. However, Windows and Linux are drastically different. Linux does not have anything similar to the Windows I/O manager. Additionally, the way that Windows schedules I/O based on priorities is much different from Linux's round robin style of scheduling.
+
+\section{Conclusion}
+In conclusion, Windows is very different from Linux, while FreeBSD shares many similarities. This is easy to see in how the operating systems handle managing I/O devices and I/O scheduling. Where as Windows tends to have plenty of seperation across different areas of the kernel, Linux and FreeBSD tends to be centralized and straight forward in it's approach.
+
+\vfill
+
+\pagebreak
+
+\bibliographystyle{IEEEtran}
+
+\bibliography{sources}
+
+\end{document}

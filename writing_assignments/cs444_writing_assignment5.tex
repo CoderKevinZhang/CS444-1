@@ -1,0 +1,121 @@
+\documentclass[journal,letterpaper,draftclsnofoot,onecolumn,10pt]{IEEEtran}
+
+\usepackage{graphicx}                                        
+\usepackage{amssymb}                                         
+\usepackage{amsmath}                                         
+\usepackage{amsthm}                                          
+
+\usepackage{alltt}                                           
+\usepackage{float}
+\usepackage{color}
+\usepackage{url}
+
+\usepackage{balance}
+\usepackage[TABBOTCAP, tight]{subfigure}
+\usepackage{enumitem}
+\usepackage{pstricks, pst-node}
+
+\usepackage{geometry}
+\geometry{textheight=8.5in, textwidth=6in}
+
+\newcommand{\cred}[1]{{\color{red}#1}}
+\newcommand{\cblue}[1]{{\color{blue}#1}}
+
+\usepackage{hyperref}
+
+\def\name{Dylan Camus}
+
+%pull in the necessary preamble matter for pygments output
+\input{pygments.tex}
+
+% The following metadata will show up in the PDF properties
+\hypersetup{
+   colorlinks = false,
+   urlcolor = black,
+   pdfauthor = {\name},
+   pdfkeywords = {cs444 ``operating systems'' writing},
+   pdftitle = {CS 444 Writing Assignment 5},
+   pdfsubject = {CS 444 Writing Assignment 5},
+   pdfpagemode = UseNone
+}
+
+\parindent = 0.0 in
+\parskip = 0.1 in
+
+\begin{document}
+\begin{titlepage}
+
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % Defines a new command for the horizontal lines, change thickness here
+
+\center % Center everything on the page
+ 
+%---------------------------------------------------------------------------
+%	HEADING SECTIONS
+%---------------------------------------------------------------------------
+
+\textsc{\LARGE Oregon State University}\\[1.5cm] % Name of your university/college
+\textsc{\Large Operating Systems II}\\[0.5cm] % Major heading such as course name
+\textsc{\large CS444}\\[0.5cm] % Minor heading such as course title
+
+%---------------------------------------------------------------------------
+%	TITLE SECTION
+%---------------------------------------------------------------------------
+
+\HRule \\[0.4cm]
+{ \huge \bfseries Comparing Filesystems and VFS of Windows and FreeBSD to Linux}\\[0.4cm] % Title of your document
+\HRule \\[1.5cm]
+ 
+%---------------------------------------------------------------------------
+%	AUTHOR SECTION
+%---------------------------------------------------------------------------
+
+\begin{minipage}{0.4\textwidth}
+   \begin{flushleft} \large
+      \emph{Author:}\\
+      Dylan \textsc{Camus} % Your name
+   \end{flushleft}
+\end{minipage}
+~
+\begin{minipage}{0.4\textwidth}
+   \begin{flushright} \large
+      \emph{Professor:} \\
+      Prof. Kevin \textsc{McGrath} % Supervisor's Name
+   \end{flushright}
+\end{minipage}\\[4cm]
+
+% If you don't want a supervisor, uncomment the two lines below and remove the section above
+%\Large \emph{Author:}\\
+%John \textsc{Smith}\\[3cm] % Your name
+
+%---------------------------------------------------------------------------
+%	DATE SECTION
+%---------------------------------------------------------------------------
+
+{\large \today}\\[3cm] % Date, change the \today to a set date if you want to be precise
+
+%---------------------------------------------------------------------------
+%	ABSTRACT SECTION
+%---------------------------------------------------------------------------
+\begin{abstract}
+The goal of this paper is to look at the Windows and FreeBSD operating systems and compare their similarities and differences to the Linux operating system. These operating systems are compared based on how they handle filesystems and VFS.
+\end{abstract}
+
+\vfill % Fill the rest of the page with whitespace
+
+\pagebreak
+
+\end{titlepage}
+
+\setlength{\parindent}{3ex}
+
+I unfortunately did not time manage properly and have no time to finish this assignment before the due date.\cite{l05}
+
+\vfill
+
+\pagebreak
+
+\bibliographystyle{IEEEtran}
+
+\bibliography{sources}
+
+\end{document}

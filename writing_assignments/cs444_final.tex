@@ -1,0 +1,324 @@
+\documentclass[journal,letterpaper,draftclsnofoot,onecolumn,10pt]{IEEEtran}
+
+\usepackage{graphicx}                                        
+\usepackage{amssymb}                                         
+\usepackage{amsmath}                                         
+\usepackage{amsthm}                                          
+
+\usepackage{alltt}                                           
+\usepackage{float}
+\usepackage{color}
+\usepackage{url}
+
+\usepackage{balance}
+\usepackage[TABBOTCAP, tight]{subfigure}
+\usepackage{enumitem}
+\usepackage{pstricks, pst-node}
+
+\usepackage{geometry}
+\geometry{textheight=8.5in, textwidth=6in}
+
+\newcommand{\cred}[1]{{\color{red}#1}}
+\newcommand{\cblue}[1]{{\color{blue}#1}}
+
+\usepackage{hyperref}
+
+\def\name{Dylan Camus}
+
+%pull in the necessary preamble matter for pygments output
+\input{pygments.tex}
+
+% The following metadata will show up in the PDF properties
+\hypersetup{
+   colorlinks = false,
+   urlcolor = black,
+   pdfauthor = {\name},
+   pdfkeywords = {cs444 ``operating systems'' writing},
+   pdftitle = {CS 444 Writing Final},
+   pdfsubject = {CS 444 Writing Final},
+   pdfpagemode = UseNone
+}
+
+\parindent = 0.0 in
+\parskip = 0.1 in
+
+\begin{document}
+\begin{titlepage}
+
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % Defines a new command for the horizontal lines, change thickness here
+
+\center % Center everything on the page
+ 
+%---------------------------------------------------------------------------
+%	HEADING SECTIONS
+%---------------------------------------------------------------------------
+
+\textsc{\LARGE Oregon State University}\\[1.5cm] % Name of your university/college
+\textsc{\Large Operating Systems II}\\[0.5cm] % Major heading such as course name
+\textsc{\large CS444}\\[0.5cm] % Minor heading such as course title
+
+%---------------------------------------------------------------------------
+%	TITLE SECTION
+%---------------------------------------------------------------------------
+
+\HRule \\[0.4cm]
+{ \huge \bfseries Comparing Windows and FreeBSD to Linux}\\[0.4cm] % Title of your document
+\HRule \\[1.5cm]
+ 
+%---------------------------------------------------------------------------
+%	AUTHOR SECTION
+%---------------------------------------------------------------------------
+
+\begin{minipage}{0.4\textwidth}
+   \begin{flushleft} \large
+      \emph{Author:}\\
+      Dylan \textsc{Camus} % Your name
+   \end{flushleft}
+\end{minipage}
+~
+\begin{minipage}{0.4\textwidth}
+   \begin{flushright} \large
+      \emph{Professor:} \\
+      Dr. Kevin \textsc{McGrath} % Supervisor's Name
+   \end{flushright}
+\end{minipage}\\[4cm]
+
+% If you don't want a supervisor, uncomment the two lines below and remove the section above
+%\Large \emph{Author:}\\
+%John \textsc{Smith}\\[3cm] % Your name
+
+%---------------------------------------------------------------------------
+%	DATE SECTION
+%---------------------------------------------------------------------------
+
+{\large \today}\\[3cm] % Date, change the \today to a set date if you want to be precise
+
+%---------------------------------------------------------------------------
+%	ABSTRACT SECTION
+%---------------------------------------------------------------------------
+\begin{abstract}
+The goal of this paper is to look at the Windows and FreeBSD operating systems and compare their similarities and differences to the Linux operating system. These operating systems are compared based on how they handle processes, threads, CPU schedulers, I/O, I/O schedulers, interrupts, and memory management.
+\end{abstract}
+
+\vfill % Fill the rest of the page with whitespace
+
+\pagebreak
+
+\end{titlepage}
+
+\tableofcontents
+
+\setlength{\parindent}{3ex}
+
+\section{Introduction}
+
+An operating system is defined by Robert Love as the parts of a system that are responsible for basic use and administration. Operating systems handle your device drivers, filesystems, user interface, and system utilities. The most important part of the operating system, however, is the kernel. The kernel is the core of the operating system. It handles the systems resources. Some of the important tasks that the kernel manages are the scheduling of the CPU in order to share the processor among multiple processes, memory allocation and management, and interrupt handling. Over the next several sections, these concepts will be covered in greater detail.    
+
+\section{Processes, Threads, and CPU Schedulers}
+
+A few of the kernels important tasks are handling processes, threads, and the scheduling of the CPU to share the processor with multiple processes and threads. This section will take a closer look at how these concepts are implemented in both the Windows and FreeBSD kernels and the ways in which each compares to Linux.
+
+\subsection{Windows}
+
+Every Windows process is represented by what is known as an EPROCESS. The EPROCESS is a collection of pointers to other data structures. These data structures live in system address space. Every process is encapsulated as a process object by the executive object manager. Process objects are made up of EPROCESS data structure. The EPROCESS data structure has a large number of fields, such as the process id, memory management information, flags and counters, just to name a few. The first field of an EPROCESS, the process control block, is made up of a KPROCESS. The KPROCESS is a data structure used for kernel operations, such as the dispatcher, scheduler, and interrupt code.\cite{1ris12}
+
+In addition to the EPROCESS and KPROCESS structures, Windows also has a process structure that is specific to the Windows subsystem known as the CSR\_PROCESS. This process contains session data, process links, thread data, and client data. Finally, the last process structure is the W32PROCESS. This process is what stores the information about GUI processes. It contains flags and pointers needed for Windows graphics.\cite{1ris12}
+
+The creation of a Windows process consists of multiple stages across three different parts of the Windows kernel: the Windows client-side library, the Windows executive, and the Windows subsystem process. The first step of creating a process in Windows is to parse, validate, and convert the parameters, flags, and attribute list. Then, the executable image file is opened. Windows then creates an executive process object and creates an initial thread. Next, subsystem-specific process initialization is carried out. Finally, the initial thread begins executing and the initialization of the address space completes.\cite{1ris12}
+
+Similar to how Windows processes are represented by a EPROCESS structure, threads in Windows are represented by an ETHREAD structure, which in itself contains a KTHREAD structure as it's first member. Similarly, the ETHREAD structure and the structures it points to live in system address space, except the thread environment block, which is of type KTHREAD and therefore lives in process address space because user-mode components need to access it. Finally, continuing to mirror the structure of processes, the Windows subsystem process has a parallel structure for every thread called a CSR\_THREAD, and GUI processes have a W32THREAD that is pointed to by the KTHREAD.\cite{1ris12}
+
+While, the structure of threads is very similar to that of processes, they are in fact created a little differently. First, the CreateThread function is called which converts Windows API flags and creates a native structure of object parameters. Then an attribute list is created with the client ID and thread information block address. After that, NtCreateThreadEx is called to capture the attribute list. PspCreateThread is then called to create the thread object in a suspended state. CreateThread then checks if the activation stack needs to be activated and activates it if necessary. Following this, Windows subsystem is notified about the new thread and begins setup on it. Finally, thread ID and handle are returned and the thread is scheduled for execution.\cite{1ris12}
+
+In order to keep track of the processes and threads running on the system, windows implements a CPU scheduler. The Windows CPU scheduler is a priority based preemptive system. One of the main concepts of this scheduler is what is known as processor affinity. Processor affinity refers to the rule that at least one highest priority thread will always be running. However, these processes may be limited by the processor on which they run on. These limitations are dictated by the threads processor group. Processes run for a length of time known as a quantum, which is determend by system configuration settings, whether the process is foreground or background, and whether the quantum has been altered by the job object. Once a process has run for it's quantum, another thread of the same priority is then allowed to run. However, threads may be interupted before they finish running for their quantum because Windows CPU schedular is preemptive. A thread is preempted when another thread of higher priority becomes runnable.\cite{1ris12}
+
+Windows has no single scheduler. Instead, scheduling is spread all over the kernel and handled by the kernel's dispatcher. Threads may require dispatching when a new thread becomes runnable, a thread stops running, a thread's priority changes, or a thread's processor affinity changes. Once one of these events occur, Windows will determine which logical proccessor the thread should run on and perform a context switch, which is when the old thread's state is saved and the new threads state is loaded to the processor.\cite{1ris12}
+
+Windows uses a 32 level priority system for determining which processes run first. The number on the priority scale is determined by both the processes priority class and its relative priority. Priority in the range 16-31 is considered real time priority, while priority 0-15 is called the dynamic range. The priority of certain threads is occasionally boosted to increase responsiveness and reduce starvation.\cite{1ris12}
+
+\subsection{FreeBSD}
+
+Processes in FreeBSD operate in either user mode or kernel mode. In user mode, the process executes application code in a nonprivileged mode. When the process requires services from the operating system through a system call, the process switches to kernel mode, where it receives privileged access to kernel resources. These resources include registers, the program counter, and the stack pointer.
+
+FreeBSD uses a priority based scheduler that is biased to favor interactive programs. These programs tend to wait on I/O and therefore are often blocking. It does this by reducing priority of threads that execute over their entire timeslice, and allowing those that execute over only part of it, such as those waiting on I/O, to remain at the same priority.\cite{mn15}
+
+\subsection{Comparisons to Linux}
+
+Processes, threads, and the CPU scheduler are implemented much differently in Linux than in Windows. In Windows, a process was a combination of an EPROCCESS, the KPROCESS defined within the EPROCESS, the CRS\_PROCESS, and the W32PROCESS. In Linux, processes are much simpler. A process is stored within a doubly linked list known as the task list, which is made up of nodes of type struct task\_struct.\cite{l05}
+
+\begin{figure}[h]
+\input{__thread_info_example.c.tex}
+\caption{The structure of a node of the task list in Linux}
+\end{figure}
+
+Processes in Linux are also created in a much simpler way than in Windows. A process in Windows has to be initialized by many different parts of the Windows kernel. However, in Linux, a process is created by a simple call to fork(), which is a system call that duplicates the calling process, creating a child process which is the same except for it has a different process ID. After a fork() call, the process will then usually call the exec() system call to execute a different process. All processes in Linux derive from the init process, which has a process ID of 1.\cite{l05}
+
+Windows and Linux also differ drastically in how they handle threads. In Windows, threads are handled by explicit kernel functions, while in Linux, threads are not created with any distinction from processes, they just share resources with their parent process.\cite{l05}
+
+The CPU schedulers of Windows and Linux are, however, somewhat similar in that they are both priority based schedulers. Where Windows' scheduler was based on a 32 point priority scale, Linux uses two seperate priority values, the niceness value, which ranges from -20 to 19, and the the real-time priority.\cite{l05}
+
+FreeBSD, on the other hand, is very similar to Linux. This is due to the fact that FreeBSD is also based on Unix. The main differences between FreeBSD and Linux is in the CPU scheduler. FreeBSD uses a scheduler that prioritizes I/O, while Linux uses a more round robin approach.
+
+To summerize, Windows is very different from Linux, while FreeBSD shares many similarities. This is easy to see in how the operating systems handle processes, threads, and CPU scheduling. Where as Windows tends to have plenty of seperation across different areas of the kernel, Linux and FreeBSD tends to be centralized and straight forward in it's approach.
+
+\section{I/O and I/O Schedulers}
+
+Another important task of the kernel is how it handles I/O from devices and I/O scheduling. I/O is the way in which a person can interract with the operating system and is thus extremely important. This section will take a closer look at how I/O is implemented in both the Windows and FreeBSD kernels and the ways in which each compares to Linux.
+
+\subsection{Windows}
+
+The components that make up the I/O system in Windows are the I/O manager and device drivers. The I/O manager is the core of the I/O system. It defines the model for which I/O requests are delivered to device drivers. I/O in Windows is packet driven. I/O requests are represented as an I/O request packet. This format allows a thread to manage multiple I/O requests at the same time. Additionally, the I/O manager also has common functions that are used by various device drivers for I/O processing. This centralization allows the drivers themselves to be much simpler in design.\cite{2ris12}
+ 
+I/O in Windows starts when an application executes an I/O function. The I/O manager treats the I/O as if it were a file. This abstraction is known as a virtual file. Thus, it is the drivers job to convert device specific commands into a file-like structure that the I/O manager can read. Then, the I/O manager dynamically directs the virtual file to the device driver.\cite{2ris12}
+
+In order to allow the I/O manager to communicate with a device, a device driver is needed to manage the device and communicate with the I/O manager in a way in which it understands. A WDM driver is a driver that follows the Windows Driver Model (WDM). There are three types of WDM drivers: the bus driver, which managers a logical or physical bus; the function driver, which exports the operational interface of the device to the operating system; and the filter driver, which changes the behavior of a device or driver.\cite{2ris12}
+
+Windows uses a priority system to help foreground I/O operations to get prefered over background operations. Two of the concepts that implement this behavior are I/O priority and I/O bandwidth reservations.\cite{2ris12}
+
+The Windows I/O manager supports five levels of I/O priority. These levels are critical, high, normal, low, and very low. Every I/O request has a default priority of normal. Background operations have their priority set to very low. These priority levels are divided into two I/O prioritization modes. These modes are called strategies. The two strategies are the hierarchy prioratization and the idle prioritization strategies.
+
+The hierarchy prioritization stategy deals with all I/O except very low priority I/O. It does as its name suggests and services I/O in the order of the I/O's priority, starting with very high priority I/O, then high priority I/O, and so on. The idle strategy, however, works differently. One problem that arises with the hierarchy prioritization is that idle I/O is likely to be starved. The idle stategy deals with this by using a timer to monitor the queue and guarantee that at least one very low priority item eventually will get serviced.\cite{2ris12}
+
+\subsection{FreeBSD}
+
+In FreeBSD, all I/O is done using descriptors for user processes. A descriptor is an unsigned integer that is obtained from the open and socket system calls. FreeBSD supports seven kinds of objects that are represtented as descriptors. They are: files, pipes, fifos, sockets, POSIX IPCs, event queues, and processes. Devices in FreeBSD are accessed in the same way as regular files using the same system calls. Devices such as terminals, printers, and tape drivers are all accessed just as normal files are accessed.\cite{mn15}
+
+There are three main kinds of I/O in FreeBSD. The first is the character-device interface. A character-device interface maps the hardware interface into a byte stream. An example of a device that is a character device is a terminal. Disks can also be implemented as a character device. These are known as raw-devices. Raw-devices are tasked with directly arranging I/O to and from the device.\cite{mn15}
+
+\begin{figure}[H]
+    \input{__char_dev.c.tex}
+    \caption{This is an example of the data structure used by a simple character device implemented in FreeBSD.}
+\end{figure}
+
+An interesting aspect of raw-devices is that they bypass kernel buffers. This eliminates memory to memory copying, which improves performance but also denies the application the benefit of data caching. This means that raw-devices must manage their own buffers.\cite{mn15}
+
+\begin{figure}[H]
+   \input{__physio.c.tex}
+   \caption{This is a pseudo-code example of the physio raw-device algorithm for buffer management. It requests the hardware device to transfer data directly to or from the data buffer. This buffer lives in user space. It checks to make sure the buffer is accessible and locks the buffer while using it.}
+\end{figure}
+
+The other types of devices in FreeBSD are disk devices and network devices. Disk devices are almost identical to character devices but differ in their sorting algorithms. Network devices are devices that are responsible for taking network data as packets and transmitting or receiving them. Network devices are completely asynchronous. Thus, they receive data as soon as it arrives without having to wait on anything else.\cite{mn15}
+
+\begin{figure}[H]
+   \input{__disksort.c.tex}
+   \caption{This is a pseudo-code example of the disksort algorithm in FreeBSD. This algorithm keeps two queues of requests and keeps them in order by their block number. One queue is kept as the active list, while the other is the next-pass list. The front of the active list is the current position of the drive. The next-pass list is only populated when the active list is not empty, and then it is only populated with requests that are before the front of the active list. Once the active list has been completely serviced, the next-pass list becomes the new active list and a new next-pass list is created.}
+\end{figure}
+
+\subsection{Comparisons to Linux}
+
+I/O in Linux is made up of what is known as the block I/O layer. The basic container for block I/O is the bio structure. This structure represents block I/O operations that are active.
+
+\begin{figure}[H]
+   \input{__bio.c.tex}
+   \caption{This is an example of the Linux bio structure. This structure is the basic container for block I/O within the Linux kernel.}
+\end{figure}
+
+I/O requests are stored in a request queue when they are pending. The request queue is implemented as a doubly linked list. I/O scheduling is handled by one of Linux's various I/O schedulers. The I/O scheduler performs merging and sorting on the pending requests in order to reduce the amount of time waiting for the device head to move from location to location and to improve fairness. The default I/O scheduler of Linux is the completely fair I/O scheduler. This scheduler assigns incoming I/O requests to specific queues based on the process originating the I/O request. Then, within each queue the requests are sorted based on their location on the disk. Each queue is then sorted round robin style.\cite{l05}
+
+As can be seen by the different implementations if I/O between Windows, FreeBSD, and Linux, none of them are alike. The closest comparison is with Linux and FreeBSD, which both have a similar structure for I/O requests and a somewhat similar scheduler. However, Windows and Linux are drastically different. Linux does not have anything similar to the Windows I/O manager. Additionally, the way that Windows schedules I/O based on priorities is much different from Linux's round robin style of scheduling.
+
+\section{Interrupts}
+
+Another fundemental concept of a kernel is how it handles interrupts. An interrupt is an asynchronous request to the kernel for the flow of control of the processor to be shifted to some other task. In this section, we will take a closer look at how this concept is implemented in both the Windows and FreeBSD kernels and the ways in which each compares to Linux.
+
+\subsection{Windows}
+
+Windows uses what is known as trap dispatching to handle its system mechanisms. Trap dispatching includes interrupts and exceptions that change the flow of the processor. The difference between an interrupt and an exception is that an interrupt is an asynchronous event that is unrelated to whatever the process is currently executing, while an exception is a synchronous condition that results from the execution of some instruction. Interrupts are generally used by I/O devices and system clocks and timers and can be turned on or off by setting various flags. Exceptions are generally thrown for things such as memory-access violations, debuggers, and divide-by-zero errors.\cite{1ris12}
+
+Once an interrupt or an exception has been triggered, the state of the processor is saved on the kernel stack so that once the interrupt or exception has been serviced, normal flow of control can resume where the process left off. The kernel uses what are known as interrupt trap handlers to transfer control to either some external routine that handles the interrupt or to an internal routine that responds to the interrupt. When an external I/O interrupt occurs, the interrupt controller associated with that interrupt interrupts the processor. The processor than queries the controller for the interrupt request, which is then translated to an interrupt number by the interrupt controller. The interrupt controller uses this number to index into the interrupt dispatch table, which is how the appropriate interrupt dispatch routine is found.\cite{1ris12}
+
+Most Windows computers today use the i82489 Advanced Programmable Interrupt Controller as its interrupt controller. It consits of many components. It has an I/O component that receives interrupts from I/O devices, a local component that receives interrupts from the I/O component, and a translator component that translates its input into the older i8259A Programmable Interrupt Controller format for compatablility. There is also another component that sits between the processor and the interrupt controllers. This piece of logic is responsible for routing the interrupts to an appropriate processor core. This is done for load reasons and to route interrupts of similar types to cores that have just finished servicing an interrupt of that type.\cite{1ris12}
+
+Windows handles interrupt priority using what is known as interrupt request levels. These levels are represented internally in the kernel as numbers 0 through 31 on x86 systems and 0 through 15 on x64. Higher numbers represent higher priority interrupts. Interrupts are serviced in priority order, and higher level interrupts preempt lower interrupts. For example, when a higher level interrupt occurs, the processor state is saved and the higher priority interrupt is handled before control is returned to the lower priority interrupt. If a high priority interrupt is raised in this time, that interrupt is handled before control is returned to the lower level interrupt. Generally, the interrupt request level is kept at a low level and is only raised when an interrupt occurs.\cite{1ris12}
+
+While not as common as I/O interrupts, software interrupts are also a type of interrupt that needs to be handled by the kernel. Examples of a software interrupt are thread dispatching, timer expiration, and asynchronous execution of a program. Often the kernel detects that a context switch is neccessary within a thread, but that it should occur deep within layers of code. That is, the kernel requests dispatching but would like to defer it until the current task is completed. In this case, the kernel will use what is known as a deferred procedure call interrupt. When the kernel detects that a dispatch should occur, it requests a deferred procedure call. The interrupt is not handled until the interrupt request level drops down to a low level and no other dispatch interrupts are pending.\cite{1ris12}
+i
+
+\subsection{FreeBSD}
+
+FreeBSD implements device-interrupt handlers similarly to threads in that the interrupt handler is granted it's own process context. This means that an interrupt handler cannot access any of the context of a previously running interrupt handler. Additionally, each device also gets it's own stack to run on. Interrupt handlers are never invoked from the top half of the kernel. They get all of their information from the data structures which share information from the top half of the kernel, such as the global work queue.\cite{mn15}
+
+Another type of interrupt in FreeBSD is the software interrupt. A software interrupt is used for performing lower-priority processing. Similar to hardware interrupts, software interrupts also have a process context associated with it. When a hardware interrupt arrives, the process associated with the device driver will attain the highest priority and be scheduled to run. Once there are no high priority hardware interrupts pending, then the highest priority software interrupt is scheduled to run. If a higher priority interrupt is requested during the execution of a lower priority interrupt, then the lower priority interrupt is preempted by the higher priority interrupt.\cite{mn15}
+
+Finally, the last type of interrupt in FreeBSD is the clock interrupt. The system is driven by a clock that updates itself 1000 times per second. Since handling 1000 interrupts per second would be very time consuming, the system only handles the interrupt every so many ticks from the clock. On that particulary clock tick, the hardclock() routine is called. This routine has higher priority than almost all other interrupts. Hardclock() is used to decrement timers and increment the time of day.\cite{mn15}
+
+\subsection{Comparisons to Linux}
+
+In Linux, every interrupt is assigned an interrupt request line. This is a numerical value that identifies the interrupts origin. For example, timer interrupts usually have an interrupt request line of zero, while keyboard interrupts have a value of one. The kernel, in response to an interrupt, runs an interrupt service routine from an interrupt handler. In Linux, handlers are simple C functions. They are differrent from kernel functions in that the kernel invokes them in response to interrupts and that they run in a specific context called the interrupt context.\cite{l05}
+ 
+The driver that manages a particular device is responsible for that devices interrupt handler. Every device has a driver associated with it, and if that device is to use interrupts, it must first register an interrupt handler within the kernel. A driver may do this by using the request\_irq() function.\cite{l05}
+
+\begin{figure}[H]
+   \input{__irq.c.tex}
+   \caption{This is an example of the request\_irq function in Linux. It takes an irq parameter, which specifies the interrupt number to allocate. The handler parameter is a function pointer to the interrupt handler that services the interrupt.}
+\end{figure}
+ 
+\begin{figure}[H]
+   \input{__interrupt_ex.c.tex}
+   \caption{This is an example of how an interrupt would be used in Linux. In this example, irqn is the requested interrupt line, my\_interrupt is the handler, and my\_device is the device. On failure, the code prints an error and returns.}
+\end{figure}
+
+\begin{figure}[H]
+   \input{__handler_ex.c.tex}
+   \caption{This is an example of a request handler in Linux. This request handler is for a real-time clock. The function is invoked when the machine receives an RTC interrupt.}
+\end{figure}
+
+Linux has three classes of interrupts. They are critical, noncritical, and noncritical deferrable. It uses the Advanced Programmable Interrupt Controller just the same as Windows and FreeBSD. Overall, it is apparent that there are few differences between the implementation of interrupts on Windows, FreeBSD and Linux. They all use the same general approach. Interrupts are handled by an interrupt handler. They are given some sort of priority system. They will preempt lower priority interrupts. Finally, they all use the Advanced Programmable Interrupt Controller.
+
+Windows, FreeBSD and Linux all implement interrupts using a similar approach. Interrupts are an important concept within kernel development. Interrupts allow hardware to communicate with the operating system. They are used for tasks such as resetting hardware, copying data from a device to memory or from memory to the device, and for processing and sending hardware requests. Since most devices can be run on Windows, FreeBSD, and Linux, it makes sense that each operating system would handle the interrupts in a similar fashion.
+
+\section{Memory Management}
+
+The last kernel concept we will discuss is how it handles memory management. In general, data is loaded from disk into main memory in what are known as pages. A page is a contiguous block of virtual memory. By loading memory this way, the number of disk I/O needed is greatly reduced. In this section we  will take a closer look at how this concept is implemented in both the Windows and FreeBSD kernels and the ways in which each compares to Linux.
+
+\subsection{Windows}
+
+The Windows memory manager has two primary tasks. First, it is tasked with mapping a processes' virual address space into physical memory. Second, it is tasked with paging some of the contents of memory to disk when the system tries to use more virtual memory than there is physical memory on the system. The memory manager consists of a number of components. These components include executive system services for allocating and deallocating memory, managing virtual memory, resolving hardware memory management exceptions, the balance set manager, the process/stack swapper, the modifier page writer, the mapper page writer, the segment deference thread, and the zero page thread.\cite{2ris12}
+
+The Windows virtual address space is divided into what are known as pages. A page is the smallest unit of protection at the hardware level. There are two supported page sizes: large and small. On x64 architecture, this is 4KB for small pages and 2MB for large pages. Large pages have the advantage of speed of address translation. This is due to large pages allowing for a smaller translation look-aside buffer to be used, resulting in faster lookup times. However, large pages do have a downside. Each page must be mapped with a single protection that applies to the entire page. Since large pages are more likely to contain both read and write data, they will often be marked for read/write permissions. This means that device drivers code could modify read-only operating system or driver code without causing a memory access violation.\cite{2ris12}
+
+Pages in the Windows process virtual address space can be either free, reserved, committed, or shareable. Committed pages are also known as private pages. This means that a committed page cannot be shared with other processes. Windows uses the VirtualAlloc, VirtualAllocEx, and VirtualAllocExNuma functions in order to reserve address space and then commit that reserved address space. Reserved address space is a special intermediate state that allows a thread to set aside a range of contiguous virtual addresses for possible future use. Examples of this would be an array.\cite{2ris12}
+
+Windows provides a mechanism to share memory among processes and the operating system. This is known as Shared memory. Shared memory is memory that is visible to more than one process and is present in more than one process' virtual address space. The primative data structures used to implement shared memory are called a section object. A section object is connected to either an open file on disk or to committed memory. Section objects are created by calls to the Windows CreateFileMapping or CreateFileMappingNuma functions. Windows can use these mapped files to conveniently perform I/O operations to files by making them appear in their address space.\cite{2ris12}
+
+Windows provides memory protection in order to prevent user processes from inadvertently or deliberately corrupting the address space of another processes or other part of the operating system. There are four primary ways in which Windows does this. First, all system wide data structures and memory pools used by the kernel can only be accessed while in kernel mode. This prevents user mode threads from accessing kernel pages. Second, each process has a separate, private address space. This address space is protected from being accessed by another thread from another process. Third, all processors supported by Windows provide some form of hardware controlled memory protection. Finally, shared memory objects have what are known as access control lists, which are checked when processes attempt to open section objects.\cite{2ris12}
+
+\subsection{FreeBSD}
+
+FreeBSD implements a private address space for each of its processes. This address space is divided into three parts: text, data, and stack. The text segment is read-only machine instructions of the program. It is where the programs code is stored and pulled during execution. The data and stack portions are read and writable. The data segment contains initialized and uninitialized data of the program. The stack segment contains the run-time stack of the program.\cite{mn15}
+
+FreeBSD implements the mmap() function, which allows unrelated processes to request a shared mapping of a file into their address spaces. This allows multiple processes to map a file into their address spaces, and see that file updated when changes are made to it. These changes are reflected across every process that has the file mapped.\cite{mn15}
+
+FreeBSD provides a general memory allocator which is similar to the C functions malloc() and free(). These are used to reduce the complexity of writing code inside the kernel. The allocation routine takes a parameter specifying the size of memory that is needed and allocates it without paging. The free routine takes a pointer to the storage being freed, and does not require the size of the storage. These proceedures are known as zalloc() and zfree().\cite{mn15}
+
+\subsection{Comparisons to Linux}
+
+In Linux, the kernel represents every physical page on the system with a struct page structure. This structure contains flags for storing the status of a page, usage count of the page, the pages virtual address, and other important pieces of metadata about the page. The kernel uses this structure to keep track of all the pages in the system. The kernel needs to known when a page is free and who owns which page.\cite{l05}
+
+\begin{figure}[H]
+   \input{__page.c.tex}
+   \caption{This is an example of the struct page data structure of the Linux kernel. It keeps of every physical page on the system. On a 4GB system with 524,288 processes, this struct takes up about 20MB of space.}
+\end{figure}
+
+Due to hardware constraints, the Linux kernel cannot treat all pages as identical. To that end, Linux implements what are known as page zones. Linux has four different page zones: ZONE\_DMA, which are pages that can undergo DMA; ZONE\_DMA32, which are pages that can undergo DMA and are accessible only by 32-bit devices; ZONE\_NORMAL, which are normal pages; and ZONE\_HIGHMEM, which are pages that are not permanently mapped into the kernel's address space. \cite{l05}
+
+\begin{figure}[H]
+   \input{__zone.c.tex}
+   \caption{This is an example of the struct zone data structure. It contains all the metadata on a zone.}
+\end{figure}
+
+Windows, FreeBSD and Linux all implement memory management using a similar approach. Memory management is an important concept within kernel development. All three operating systems had a similar approach in how they paged data from disk to main memory for later use. The way in which they differ is the inner structures that handle the meta data of the processes page. Additionlly, each operating system also had a different way of handling shared address space between processes.
+
+\section{Conclusion}
+
+In conclussion, Windows, FreeBSD, and Linux all implement the concepts of CPU scheduling, I/O scheduling, interrupts, and memory management in one way or another. As a whole, Linux and FreeBSD share many similarities. This is likely due to the fact that they both share a common ancestor in Unix. Windows, on the otherhand, tends to have a different approach to these concepts. Overall, Windows tends to favor large, complex structures split around multiple places in the kernel to handle it's tasks, while FreeBSD and Linux tend to favor centralized, concise structures that follow similar patterns throught the kernel.       
+
+\vfill
+
+\pagebreak
+
+\bibliographystyle{IEEEtran}
+
+\bibliography{sources}
+
+\end{document}

@@ -1,0 +1,27 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PY{k+kt}{void} \PY{n}{physio} \PY{p}{(}
+   \PY{n}{device} \PY{n}{dev}\PY{p}{,}
+   \PY{k}{struct} \PY{n}{uio} \PY{o}{*}\PY{n}{uio}\PY{p}{,}
+   \PY{k+kt}{int} \PY{n}{ioflag}\PY{p}{)}\PY{p}{;}
+\PY{p}{\PYZob{}}
+   \PY{n}{allocate} \PY{n}{a} \PY{n}{swap} \PY{n}{buffer}\PY{p}{;}
+   \PY{k}{while} \PY{p}{(}\PY{n}{uio} \PY{n}{is} \PY{n}{not} \PY{n}{exhausted}\PY{p}{)} \PY{p}{\PYZob{}}
+      \PY{n}{mark} \PY{n}{the} \PY{n}{buffer} \PY{n}{busy}\PY{p}{;}
+      \PY{n}{set} \PY{n}{up} \PY{n}{a} \PY{n}{maximum}\PY{o}{-}\PY{n}{size} \PY{n}{transfer}\PY{p}{;}
+      \PY{n}{use} \PY{n}{device} \PY{n}{maximum} \PY{n}{I}\PY{o}{/}\PY{n}{O} \PY{n}{size} \PY{n}{to} \PY{n}{bound}
+	 \PY{n}{the} \PY{n}{transfer} \PY{n}{size}\PY{p}{;}
+      \PY{n}{check} \PY{n}{user} \PY{n}{read}\PY{o}{/}\PY{n}{write} \PY{n}{access} \PY{n}{at} \PY{n}{uio} \PY{n}{location}\PY{p}{;}
+      \PY{n}{lock} \PY{n}{the} \PY{n}{part} \PY{n}{of} \PY{n}{the} \PY{n}{user} \PY{n}{address} \PY{n}{space}
+	 \PY{n}{involved} \PY{n}{in} \PY{n}{the} \PY{n}{transfer} \PY{n}{into} \PY{n}{RAM}\PY{p}{;}
+      \PY{n}{map} \PY{n}{the} \PY{n}{user} \PY{n}{pages} \PY{n}{into} \PY{n}{the} \PY{n}{buffer}\PY{p}{;}
+      \PY{n}{call} \PY{n}{dev}\PY{o}{-}\PY{o}{>}\PY{n}{strategy}\PY{p}{(}\PY{p}{)} \PY{n}{to} \PY{n}{start} \PY{n}{the} \PY{n}{transfer}\PY{p}{;}
+      \PY{n}{wait} \PY{n}{as} \PY{n}{the} \PY{n}{transfer} \PY{n}{completes}\PY{p}{;}
+      \PY{n}{unmap} \PY{n}{the} \PY{n}{user} \PY{n}{pages} \PY{n}{from} \PY{n}{the} \PY{n}{buffer}\PY{p}{;}
+      \PY{n}{unlock} \PY{n}{the} \PY{n}{part} \PY{n}{of} \PY{n}{the} \PY{n}{address} \PY{n}{space}
+	 \PY{n}{previously} \PY{n}{locked}\PY{p}{;}
+      \PY{n}{deduct} \PY{n}{the} \PY{n}{transfer} \PY{n}{size} \PY{n}{from} \PY{n}{the} \PY{n}{total} \PY{n}{number}
+	 \PY{n}{of} \PY{n}{data} \PY{n}{to} \PY{n}{transfer}
+   \PY{p}{\PYZcb{}}
+   \PY{n}{free} \PY{n}{swap} \PY{n}{buffer}\PY{p}{;}
+\PY{p}{\PYZcb{}}
+\end{Verbatim}

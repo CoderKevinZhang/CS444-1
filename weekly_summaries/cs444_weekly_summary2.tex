@@ -1,0 +1,48 @@
+\documentclass[letterpaper,10pt]{article}
+
+\usepackage{graphicx}                                        
+\usepackage{amssymb}                                         
+\usepackage{amsmath}                                         
+\usepackage{amsthm}                                          
+
+\usepackage{alltt}                                           
+\usepackage{float}
+\usepackage{color}
+\usepackage{url}
+
+\usepackage{balance}
+\usepackage[TABBOTCAP, tight]{subfigure}
+\usepackage{enumitem}
+\usepackage{pstricks, pst-node}
+
+\usepackage{geometry}
+\geometry{textheight=8.5in, textwidth=6in}
+
+\newcommand{\cred}[1]{{\color{red}#1}}
+\newcommand{\cblue}[1]{{\color{blue}#1}}
+
+\usepackage{hyperref}
+
+\def\name{Dylan Camus}
+
+%pull in the necessary preamble matter for pygments output
+\input{pygments.tex}
+
+% The following metadata will show up in the PDF properties
+\hypersetup{
+   colorlinks = false,
+   urlcolor = black,
+   pdfauthor = {\name},
+   pdfkeywords = {cs444 ``operating systems'' summary},
+   pdftitle = {CS 444 Weekly Summary: Week Two},
+   pdfsubject = {CS 444 Weekly Summary: Week Two},
+   pdfpagemode = UseNone
+}
+
+\parindent = 0.0 in
+\parskip = 0.1 in
+
+\begin{document}
+\section{Weekly Summary: Week Two}
+Robert Love's book, "Linux Kernel Development(2010)", chapters three and four, asserts that processes are a fundemental concept within operating systems and how they are handled is the ultimate reason that operating systems exist. Love supports this claim by breaking down the components of a process and the different methods of process scheduling used in Linux. Love's purpose is to remove some of the abstraction of the operating system by delving into the system calls behind process creation and process scheduling in order to provide readers with a deeper understanding of the way Linux utilizes system resources to give the user the illusion that processes are being run at the same time. Considering the technical language used in the chapters, Love is writing to an audience who already has an understanding of the basics of operating systems and is familiar with the C programming language.
+\end{document}

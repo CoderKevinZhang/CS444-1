@@ -1,0 +1,23 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PY{k}{struct} \PY{n}{bio} \PY{p}{\PYZob{}}
+   \PY{n}{sector\PYZus{}t} \PY{n}{bi\PYZus{}sector}\PY{p}{;} \PY{c+cm}{/* associated sector on disk */}
+   \PY{k}{struct} \PY{n}{bio} \PY{o}{*}\PY{n}{bi\PYZus{}next}\PY{p}{;} \PY{c+cm}{/* list of requests */}
+   \PY{k}{struct} \PY{n}{block\PYZus{}device} \PY{o}{*}\PY{n}{bi\PYZus{}bdev}\PY{p}{;} \PY{c+cm}{/* associated block device */}
+   \PY{k+kt}{unsigned} \PY{k+kt}{long} \PY{n}{bi\PYZus{}flags}\PY{p}{;} \PY{c+cm}{/* status and command flags */}
+   \PY{k+kt}{unsigned} \PY{k+kt}{long} \PY{n}{bi\PYZus{}rw}\PY{p}{;} \PY{c+cm}{/* read or write? */}
+   \PY{k+kt}{unsigned} \PY{k+kt}{short} \PY{n}{bi\PYZus{}vcnt}\PY{p}{;} \PY{c+cm}{/* number of bio\PYZus{}vecs off */}
+   \PY{k+kt}{unsigned} \PY{k+kt}{short} \PY{n}{bi\PYZus{}idx}\PY{p}{;} \PY{c+cm}{/* current index in bi\PYZus{}io\PYZus{}vec */}
+   \PY{k+kt}{unsigned} \PY{k+kt}{short} \PY{n}{bi\PYZus{}phys\PYZus{}segments}\PY{p}{;} \PY{c+cm}{/* number of segments */}
+   \PY{k+kt}{unsigned} \PY{k+kt}{int} \PY{n}{bi\PYZus{}size}\PY{p}{;} \PY{c+cm}{/* I/O count */}
+   \PY{k+kt}{unsigned} \PY{k+kt}{int} \PY{n}{bi\PYZus{}seg\PYZus{}front\PYZus{}size}\PY{p}{;} \PY{c+cm}{/* size of first segment */}
+   \PY{k+kt}{unsigned} \PY{k+kt}{int} \PY{n}{bi\PYZus{}seg\PYZus{}back\PYZus{}size}\PY{p}{;} \PY{c+cm}{/* size of last segment */}
+   \PY{k+kt}{unsigned} \PY{k+kt}{int} \PY{n}{bi\PYZus{}max\PYZus{}vecs}\PY{p}{;} \PY{c+cm}{/* maximum bio\PYZus{}vecs possible */}
+   \PY{k+kt}{unsigned} \PY{k+kt}{int} \PY{n}{bi\PYZus{}comp\PYZus{}cpu}\PY{p}{;} \PY{c+cm}{/* completion CPU */}
+   \PY{n}{atomic\PYZus{}t} \PY{n}{bi\PYZus{}cnt}\PY{p}{;} \PY{c+cm}{/* usage counter */}
+   \PY{k}{struct} \PY{n}{bio\PYZus{}vec} \PY{o}{*}\PY{n}{bi\PYZus{}io\PYZus{}vec}\PY{p}{;} \PY{c+cm}{/* bio\PYZus{}vec list */}
+   \PY{n}{bio\PYZus{}end\PYZus{}io\PYZus{}t} \PY{o}{*}\PY{n}{bi\PYZus{}end\PYZus{}io}\PY{p}{;} \PY{c+cm}{/* I/O completion method */}
+   \PY{k+kt}{void} \PY{o}{*}\PY{n}{bi\PYZus{}private}\PY{p}{;} \PY{c+cm}{/* owner-private method */}
+   \PY{n}{bio\PYZus{}destructor\PYZus{}t} \PY{o}{*}\PY{n}{bi\PYZus{}destructor}\PY{p}{;} \PY{c+cm}{/* destructor method */}
+   \PY{k}{struct} \PY{n}{bio\PYZus{}vec} \PY{n}{bi\PYZus{}inline\PYZus{}vecs}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{]}\PY{p}{;} \PY{c+cm}{/* inline bio vectors */}
+\PY{p}{\PYZcb{}}\PY{p}{;}
+\end{Verbatim}

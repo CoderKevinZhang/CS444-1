@@ -1,0 +1,51 @@
+\documentclass[letterpaper,10pt]{article}
+
+\usepackage{graphicx}                                        
+\usepackage{amssymb}                                         
+\usepackage{amsmath}                                         
+\usepackage{amsthm}                                          
+
+\usepackage{alltt}                                           
+\usepackage{float}
+\usepackage{color}
+\usepackage{url}
+
+\usepackage{balance}
+\usepackage[TABBOTCAP, tight]{subfigure}
+\usepackage{enumitem}
+\usepackage{pstricks, pst-node}
+
+\usepackage{geometry}
+\geometry{textheight=8.5in, textwidth=6in}
+
+\newcommand{\cred}[1]{{\color{red}#1}}
+\newcommand{\cblue}[1]{{\color{blue}#1}}
+
+\usepackage{hyperref}
+
+\def\name{Dylan Camus}
+
+%pull in the necessary preamble matter for pygments output
+\input{pygments.tex}
+
+% The following metadata will show up in the PDF properties
+\hypersetup{
+   colorlinks = false,
+   urlcolor = black,
+   pdfauthor = {\name},
+   pdfkeywords = {cs444 ``operating systems'' summary},
+   pdftitle = {CS 444 Weekly Summary: Week Four},
+   pdfsubject = {CS 444 Weekly Summary: Week Four},
+   pdfpagemode = UseNone
+}
+
+\parindent = 0.0 in
+\parskip = 0.1 in
+
+\title{CS444: Data Structures and Interrupts}
+\author{Dylan Camus}
+\date{\today}
+\begin{document}
+\maketitle
+Robert Love's book, "Linux Kernel Development(2010)", chapter 14, asserts that the underlying data structures and interrupt handlers in the Linux kernel are fundemental concepts to understanding how to program within the kernel. Love supports this claim by giving a thorough description of theses data structures and interrupt handlers and the functions that manipulate them. Love's purpose is to give the reader a general understanding of when to use each data structure and how interrupts can be used to provide asynchronous functionality. Considering the technical language used in this chapter, Love is writing to an audience who already has an understanding of the basics of operating systems and is familiar with the C programming language.
+\end{document}

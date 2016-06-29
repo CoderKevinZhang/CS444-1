@@ -1,0 +1,51 @@
+\documentclass[letterpaper,10pt]{article}
+
+\usepackage{graphicx}                                        
+\usepackage{amssymb}                                         
+\usepackage{amsmath}                                         
+\usepackage{amsthm}                                          
+
+\usepackage{alltt}                                           
+\usepackage{float}
+\usepackage{color}
+\usepackage{url}
+
+\usepackage{balance}
+\usepackage[TABBOTCAP, tight]{subfigure}
+\usepackage{enumitem}
+\usepackage{pstricks, pst-node}
+
+\usepackage{geometry}
+\geometry{textheight=8.5in, textwidth=6in}
+
+\newcommand{\cred}[1]{{\color{red}#1}}
+\newcommand{\cblue}[1]{{\color{blue}#1}}
+
+\usepackage{hyperref}
+
+\def\name{Dylan Camus}
+
+%pull in the necessary preamble matter for pygments output
+\input{pygments.tex}
+
+% The following metadata will show up in the PDF properties
+\hypersetup{
+   colorlinks = false,
+   urlcolor = black,
+   pdfauthor = {\name},
+   pdfkeywords = {cs444 ``operating systems'' summary},
+   pdftitle = {CS 444 Weekly Summary: Week Five},
+   pdfsubject = {CS 444 Weekly Summary: Week Five},
+   pdfpagemode = UseNone
+}
+
+\parindent = 0.0 in
+\parskip = 0.1 in
+
+\title{CS444: Process Address Space and Devices}
+\author{Dylan Camus}
+\date{\today}
+\begin{document}
+\maketitle
+Robert Love's book, "Linux Kernel Development(2010)", chapters 15 and 17, asserts that process address space and devices in the Linux kernel are fundemental concepts to understanding how to program within the kernel. Love supports this claim by explaining how mm\_structs, vm\_area\_structs and mmaps are used to represent process address space and how the kernel implements device drivers and manages the device tree with modules, kobjects, and sysfs. Love's purpose is to give the reader a sense of how virtual memory concepts and page tables are essential to the kernels operation and process model and how device management within the kernel is important when it comes to writing advanced moduler device drivers. Considering the technical language used in this chapter, Love is writing to an audience who already has an understanding of the basics of operating systems and is familiar with the C programming language.
+\end{document}

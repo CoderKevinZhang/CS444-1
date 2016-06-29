@@ -1,0 +1,17 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PY{c+cm}{/* Function prototypes */}
+\PY{k}{static} \PY{n}{d\PYZus{}open\PYZus{}t}      \PY{n}{echo\PYZus{}open}\PY{p}{;}
+\PY{k}{static} \PY{n}{d\PYZus{}close\PYZus{}t}     \PY{n}{echo\PYZus{}close}\PY{p}{;}
+\PY{k}{static} \PY{n}{d\PYZus{}read\PYZus{}t}      \PY{n}{echo\PYZus{}read}\PY{p}{;}
+\PY{k}{static} \PY{n}{d\PYZus{}write\PYZus{}t}     \PY{n}{echo\PYZus{}write}\PY{p}{;}\PY{n}{i}
+
+\PY{c+cm}{/* Character device entry points */}
+\PY{k}{static} \PY{k}{struct} \PY{n}{cdevsw} \PY{n}{echo\PYZus{}cdevsw} \PY{o}{=} \PY{p}{\PYZob{}}
+   \PY{p}{.}\PY{n}{d\PYZus{}version} \PY{o}{=} \PY{n}{D\PYZus{}VERSION}\PY{p}{,}
+   \PY{p}{.}\PY{n}{d\PYZus{}open} \PY{o}{=} \PY{n}{echo\PYZus{}open}\PY{p}{,}
+   \PY{p}{.}\PY{n}{d\PYZus{}close} \PY{o}{=} \PY{n}{echo\PYZus{}close}\PY{p}{,}
+   \PY{p}{.}\PY{n}{d\PYZus{}read} \PY{o}{=} \PY{n}{echo\PYZus{}read}\PY{p}{,}
+   \PY{p}{.}\PY{n}{d\PYZus{}write} \PY{o}{=} \PY{n}{echo\PYZus{}write}\PY{p}{,}
+   \PY{p}{.}\PY{n}{d\PYZus{}name} \PY{o}{=} \PY{l+s}{"}\PY{l+s}{echo}\PY{l+s}{"}\PY{p}{,}
+\PY{p}{\PYZcb{}}\PY{p}{;}
+\end{Verbatim}

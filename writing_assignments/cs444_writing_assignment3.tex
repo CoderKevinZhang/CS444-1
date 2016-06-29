@@ -1,0 +1,170 @@
+\documentclass[journal,letterpaper,draftclsnofoot,onecolumn,10pt]{IEEEtran}
+
+\usepackage{graphicx}                                        
+\usepackage{amssymb}                                         
+\usepackage{amsmath}                                         
+\usepackage{amsthm}                                          
+
+\usepackage{alltt}                                           
+\usepackage{float}
+\usepackage{color}
+\usepackage{url}
+
+\usepackage{balance}
+\usepackage[TABBOTCAP, tight]{subfigure}
+\usepackage{enumitem}
+\usepackage{pstricks, pst-node}
+
+\usepackage{geometry}
+\geometry{textheight=8.5in, textwidth=6in}
+
+\newcommand{\cred}[1]{{\color{red}#1}}
+\newcommand{\cblue}[1]{{\color{blue}#1}}
+
+\usepackage{hyperref}
+
+\def\name{Dylan Camus}
+
+%pull in the necessary preamble matter for pygments output
+\input{pygments.tex}
+
+% The following metadata will show up in the PDF properties
+\hypersetup{
+   colorlinks = false,
+   urlcolor = black,
+   pdfauthor = {\name},
+   pdfkeywords = {cs444 ``operating systems'' writing},
+   pdftitle = {CS 444 Writing Assignment 1},
+   pdfsubject = {CS 444 Writing Assignment 1},
+   pdfpagemode = UseNone
+}
+
+\parindent = 0.0 in
+\parskip = 0.1 in
+
+\begin{document}
+\begin{titlepage}
+
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % Defines a new command for the horizontal lines, change thickness here
+
+\center % Center everything on the page
+ 
+%---------------------------------------------------------------------------
+%	HEADING SECTIONS
+%---------------------------------------------------------------------------
+
+\textsc{\LARGE Oregon State University}\\[1.5cm] % Name of your university/college
+\textsc{\Large Operating Systems II}\\[0.5cm] % Major heading such as course name
+\textsc{\large CS444}\\[0.5cm] % Minor heading such as course title
+
+%---------------------------------------------------------------------------
+%	TITLE SECTION
+%---------------------------------------------------------------------------
+
+\HRule \\[0.4cm]
+{ \huge \bfseries Comparing Interrupts of Windows and FreeBSD to Linux}\\[0.4cm] % Title of your document
+\HRule \\[1.5cm]
+ 
+%---------------------------------------------------------------------------
+%	AUTHOR SECTION
+%---------------------------------------------------------------------------
+
+\begin{minipage}{0.4\textwidth}
+   \begin{flushleft} \large
+      \emph{Author:}\\
+      Dylan \textsc{Camus} % Your name
+   \end{flushleft}
+\end{minipage}
+~
+\begin{minipage}{0.4\textwidth}
+   \begin{flushright} \large
+      \emph{Professor:} \\
+      Prof. Kevin \textsc{McGrath} % Supervisor's Name
+   \end{flushright}
+\end{minipage}\\[4cm]
+
+% If you don't want a supervisor, uncomment the two lines below and remove the section above
+%\Large \emph{Author:}\\
+%John \textsc{Smith}\\[3cm] % Your name
+
+%---------------------------------------------------------------------------
+%	DATE SECTION
+%---------------------------------------------------------------------------
+
+{\large \today}\\[3cm] % Date, change the \today to a set date if you want to be precise
+
+%---------------------------------------------------------------------------
+%	ABSTRACT SECTION
+%---------------------------------------------------------------------------
+\begin{abstract}
+The goal of this paper is to look at the Windows and FreeBSD operating systems and compare their similarities and differences to the Linux operating system. These operating systems are compared based on how they handle interrupts.
+\end{abstract}
+
+\vfill % Fill the rest of the page with whitespace
+
+\pagebreak
+
+\end{titlepage}
+
+\setlength{\parindent}{3ex}
+
+\section{Introduction}
+Some of the fundemental concepts of an operating system is how it handles interrupts. An interrupt is an asynchronous request to the kernel for the flow of control of the processor to be shifted to some other task. In this paper, I will take a closer look at how this concept is implemented in both the Windows and FreeBSD operating systems. I will then examine the ways in which each compares to Linux.
+
+\section{Windows}
+
+\subsection{Interrupts}
+Windows uses what is known as trap dispatching to handle it's system mechanisms. Trap dispatching includes interrupts and exceptions that change the flow of the processor. The difference between an interrupt and an exception is that an interrupt is an asynchronous event that is unrelated to whatever the process is currently executing, while an exception is a synchronous condition that results from the execution of some instruction. Interrupts are generally used by I/O devices and system clocks and timers and can be turned on or off by setting various flags. Exceptions are generally thrown for things such as memory-access violations, debuggers, and divide-by-zero errors.\cite{1ris12}
+
+Once an interrupt or an exception has been triggered, the state of the processor is saved on the kernel stack so that once the interrupt or exception has been serviced, normal flow of control can resume where the process left off. The kernel uses what are known as interrupt trap handlers to transfer control to either some external routine that handles the interrupt or to an internal routine that responds to the interrupt. When an external I/O interrupt occurs, the interrupt controller associated with that interrupt interrupts the processor. The processor than queries the controller for the interrupt request, which is then translated to an interrupt number by the interrupt controller. The interrupt controller uses this number to index into the interrupt dispatch table, which is how the appropriate interrupt dispatch routine is found.\cite{1ris12}
+
+Most Windows computers today use the i82489 Advanced Programmable Interrupt Controller as it's interrupt controller. It consits of many components. It has an I\O component that receives interrupts from I/O devices, a local component that receives interrupts from the I/O component, and a translator component that translates it's input into the older i8259A Programmable Interrupt Controller format for compatablility. There is also another component that sits between the processor and the interrupt controllers. This piece of logic is responsible for routing the interrupts to an appropriate processor core. This is done for load reasons and to route interrupts of similar types to cores that have just finished servicing an interrupt of that type.\cite{1ris12}
+
+Windows handles interrupt priority using what is known as interrupt request levels. This levels are represented internally in the kernel as numbers 0 through 31 on x86 systems and 0 through 15 on x64. Higher numbers represent higher priority interrupts. Interrupts are serviced in priority order, and higher interrupts preempt lower interrupts. For example, when a higher interrupt occurs, the processor state is saved and the higher priority interrupt is handled before control is returned to the lower priority interrupt. If a high priority interrupt is raised in this time, that interrupt is handled before control is returned to the lower level interrupt. Generally, the interrupt request level is kept at a low level and is only raised when an interrupt occurs.\cite{1ris12}
+
+While not as common as I/O interrupts, software interrupts are also a type of interrupt that needs to be handled by the kernel. Examples of a software interrupt are thread dispatching, timer expiration, and asynchronous execution of a program. Often the kernel detects that a context switch is neccessary within a thread, but that it should occur deep within layers of code. That is, the kernel requests dispatching but would like to defer it until the current task is completed. In this case, the kernel will use what is known as a deffered procedure call interrupt. When the kernel detects that a dispatch should occur, it requests a deferred procedure call. The interrupt is not handled until the interrupt request level drops down to a low level and no other dispatch interrupts are pending.\cite{1ris12}
+
+\section{FreeBSD}
+
+\subsection{Interrupts}
+FreeBSD implements device-interrupt handlers similarly to threads in that the interrupt handler is granted it's own process context. This means that an interrupt handler cannot access any of the context of a previously running interrupt handler. Additionally, each device also gets it's own stack to run on. Interrupt handlers are never invoded from the top half of the kernel. They get all of thier information from the data structures which share information from the top half of the kernel, such as the global work queue.\cite{mn15}
+
+Another type of interrupt in FreeBSD is the software interrupt. A software interrupt is used for performing lower-priority processing. Similar to hardware devices, software interrupts also have a process context associated with it. When a hardware interrupt arrives, the process associated with the device driver will attain the highest priority and be scheduled to run. Once there are no high priority hardware interrupts pending, then the highest priority software interrupt is scheduled to run. If a higher priority interrupt is requested during the execution of a lower priority interrupt, then the lower priority interrupt is preempted by the higher priority interrupt.\cite{mn15}
+
+Finally, the last type of interrupt in FreeBSD is the clock interrupt. The system is driven by a clock that updates itself 1000 times per second. Since handling 1000 interrupts per second would be very time consuming, the system only handles the interrupt ever so many ticks from the clock. On that particulary clock tick, the hardclock() routine is called. This routine has higher priority than almost all other interrupts. Hardclock() is used to decrement timers and increment the time of day.\cite{mn15}
+
+\section{Comparisons to Linux}
+
+In Linux, every interrupt is assigned an interrupt request line. This is a numerical value that identifies the interrupts origin. For example, timer interrupts usually have an interrupt request line of zero, while keyboard interrupts have a value of one. The kernel, in response to an interrupt, runs an interrupt service routine from an interrupt handler. In Linux, handlers are simple C functions. They are differrent from kernel functions in that the kernel invokes them in response to interrupts and that they run in a specific context called the interrupt context.\cite{l05}
+
+The driver that manages a particular device is responsible for that devices interrupt handler. Every device as a driver associated with it, and if that device is to use interrupts, it must first register an interrupt handler with the kernel. A driver may do this by using the request\_irq() function.\cite{l05}
+
+\begin{figure}[H]
+   \input{__irq.c.tex}
+   \caption{This is an example of the request\_irq function in Linux. It takes an irq parameter, which specifies the interrupt number to allocate. The handler parameter is a function pointer to the interrupt handler that services the interrupt.}
+\end{figure}
+
+\begin{figure}[H]
+   \input{__interrupt_ex.c.tex}
+   \caption{This is an example of how an interrupt would be used in Linux. In this example, irqn is the requested interrupt line, my\_interrupt is the handler, and my\_device is the device. On failure, the code prints an error and returns.}
+\end{figure}
+
+\begin{figure}[H]
+   \input{__handler_ex.c.tex}
+   \caption{This is an example of a request handler in Linux. This request handler is for a real-time clock. The function is invoked when the machine receives an RTC interrupt.}
+\end{figure}
+
+Linux has three classes of interrupts. They are critical, noncritical, and noncritical deferrable. It uses the advanced programmable interrupt controller just the same as Windows and FreeBSD. Overall, it is apparent that there are few differences between the implementation of interrupts on Windows, FreeBSD and Linux. They all use the same general approach. Interurpts are handled by an interrupt handler. They are given some sort of priority system. They will preempt lower priority interrupts. Finally, they all use the advanced programmable interrupt controller.
+
+\section{Conclusion}
+In conclusion, Windows, FreeBSD and Linux all implement interrupts using a similar approach. Interrupts are an important concept within kernel development. Interrupts allow hardware to communicate with the operating system. They are used for tasks such as resetting hardware, copying data from a device to memory or from memory to the device, and for processing and sending hardware requests. Since most devices can be run on Windows, FreeBSD, and Linux, it makes sense that each operating system would handle the interrupts in a similar fashion.
+
+\vfill
+
+\pagebreak
+
+\bibliographystyle{IEEEtran}
+
+\bibliography{sources}
+
+\end{document}

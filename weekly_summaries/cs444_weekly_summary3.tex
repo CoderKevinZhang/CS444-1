@@ -1,0 +1,51 @@
+\documentclass[letterpaper,10pt]{article}
+
+\usepackage{graphicx}                                        
+\usepackage{amssymb}                                         
+\usepackage{amsmath}                                         
+\usepackage{amsthm}                                          
+
+\usepackage{alltt}                                           
+\usepackage{float}
+\usepackage{color}
+\usepackage{url}
+
+\usepackage{balance}
+\usepackage[TABBOTCAP, tight]{subfigure}
+\usepackage{enumitem}
+\usepackage{pstricks, pst-node}
+
+\usepackage{geometry}
+\geometry{textheight=8.5in, textwidth=6in}
+
+\newcommand{\cred}[1]{{\color{red}#1}}
+\newcommand{\cblue}[1]{{\color{blue}#1}}
+
+\usepackage{hyperref}
+
+\def\name{Dylan Camus}
+
+%pull in the necessary preamble matter for pygments output
+\input{pygments.tex}
+
+% The following metadata will show up in the PDF properties
+\hypersetup{
+   colorlinks = false,
+   urlcolor = black,
+   pdfauthor = {\name},
+   pdfkeywords = {cs444 ``operating systems'' summary},
+   pdftitle = {CS 444 Weekly Summary: Week Three},
+   pdfsubject = {CS 444 Weekly Summary: Week Three},
+   pdfpagemode = UseNone
+}
+
+\parindent = 0.0 in
+\parskip = 0.1 in
+
+\title{CS444: I/O Scheduling}
+\author{Dylan Camus}
+\date{\today}
+\begin{document}
+\maketitle
+Robert Love's book, "Linux Kernel Development(2010)", chapter 14, asserts that I/O schedulers are a fundemental component to the Linux kernel and are necessary for maintaining adequate throughput and fairness for block level operations. Love supports this claim by detailing the operation of the block I/O layer and by explaining how without proper I/O scheduling the throughput of the kernel may become unexceptably low. Love's purpose is to reveal the dilemmas involved in scheduling I/O and to go over the differences in the various I/O schedulers within Linux. Considering the technical language used in this chapter, Love is writing to an audience who already has an understanding of the basics of operating systems and is familiar with the C programming language.
+\end{document}

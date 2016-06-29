@@ -1,0 +1,14 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PY{k}{struct} \PY{n}{thread\PYZus{}info} \PY{p}{\PYZob{}}
+   \PY{k}{struct} \PY{n}{task\PYZus{}struct} \PY{o}{*}\PY{n}{task}\PY{p}{;}
+   \PY{k}{struct} \PY{n}{exec\PYZus{}domain} \PY{o}{*}\PY{n}{exec\PYZus{}domain}\PY{p}{;}
+   \PY{n}{\PYZus{}\PYZus{}u32} \PY{n}{flags}\PY{p}{;}
+   \PY{n}{\PYZus{}\PYZus{}u32} \PY{n}{status}\PY{p}{;}
+   \PY{n}{\PYZus{}\PYZus{}u32} \PY{n}{cpu}\PY{p}{;}
+   \PY{k+kt}{int} \PY{n}{preempt\PYZus{}count}\PY{p}{;}
+   \PY{n}{mm\PYZus{}segment\PYZus{}t} \PY{n}{addr\PYZus{}limit}\PY{p}{;}
+   \PY{k}{struct} \PY{n}{restart\PYZus{}block} \PY{n}{restart\PYZus{}block}\PY{p}{;}
+   \PY{k+kt}{void} \PY{o}{*}\PY{n}{sysenter\PYZus{}return}\PY{p}{;}
+   \PY{k+kt}{int} \PY{n}{uaccess\PYZus{}err}\PY{p}{;}
+\PY{p}{\PYZcb{}}\PY{p}{;}
+\end{Verbatim}

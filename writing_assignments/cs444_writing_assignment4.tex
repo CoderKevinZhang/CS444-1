@@ -1,0 +1,163 @@
+\documentclass[journal,letterpaper,draftclsnofoot,onecolumn,10pt]{IEEEtran}
+
+\usepackage{graphicx}                                        
+\usepackage{amssymb}                                         
+\usepackage{amsmath}                                         
+\usepackage{amsthm}                                          
+
+\usepackage{alltt}                                           
+\usepackage{float}
+\usepackage{color}
+\usepackage{url}
+
+\usepackage{balance}
+\usepackage[TABBOTCAP, tight]{subfigure}
+\usepackage{enumitem}
+\usepackage{pstricks, pst-node}
+
+\usepackage{geometry}
+\geometry{textheight=8.5in, textwidth=6in}
+
+\newcommand{\cred}[1]{{\color{red}#1}}
+\newcommand{\cblue}[1]{{\color{blue}#1}}
+
+\usepackage{hyperref}
+
+\def\name{Dylan Camus}
+
+%pull in the necessary preamble matter for pygments output
+\input{pygments.tex}
+
+% The following metadata will show up in the PDF properties
+\hypersetup{
+   colorlinks = false,
+   urlcolor = black,
+   pdfauthor = {\name},
+   pdfkeywords = {cs444 ``operating systems'' writing},
+   pdftitle = {CS 444 Writing Assignment 4},
+   pdfsubject = {CS 444 Writing Assignment 4},
+   pdfpagemode = UseNone
+}
+
+\parindent = 0.0 in
+\parskip = 0.1 in
+
+\begin{document}
+\begin{titlepage}
+
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % Defines a new command for the horizontal lines, change thickness here
+
+\center % Center everything on the page
+ 
+%---------------------------------------------------------------------------
+%	HEADING SECTIONS
+%---------------------------------------------------------------------------
+
+\textsc{\LARGE Oregon State University}\\[1.5cm] % Name of your university/college
+\textsc{\Large Operating Systems II}\\[0.5cm] % Major heading such as course name
+\textsc{\large CS444}\\[0.5cm] % Minor heading such as course title
+
+%---------------------------------------------------------------------------
+%	TITLE SECTION
+%---------------------------------------------------------------------------
+
+\HRule \\[0.4cm]
+{ \huge \bfseries Comparing Memory Management of Windows and FreeBSD to Linux}\\[0.4cm] % Title of your document
+\HRule \\[1.5cm]
+ 
+%---------------------------------------------------------------------------
+%	AUTHOR SECTION
+%---------------------------------------------------------------------------
+
+\begin{minipage}{0.4\textwidth}
+   \begin{flushleft} \large
+      \emph{Author:}\\
+      Dylan \textsc{Camus} % Your name
+   \end{flushleft}
+\end{minipage}
+~
+\begin{minipage}{0.4\textwidth}
+   \begin{flushright} \large
+      \emph{Professor:} \\
+      Prof. Kevin \textsc{McGrath} % Supervisor's Name
+   \end{flushright}
+\end{minipage}\\[4cm]
+
+% If you don't want a supervisor, uncomment the two lines below and remove the section above
+%\Large \emph{Author:}\\
+%John \textsc{Smith}\\[3cm] % Your name
+
+%---------------------------------------------------------------------------
+%	DATE SECTION
+%---------------------------------------------------------------------------
+
+{\large \today}\\[3cm] % Date, change the \today to a set date if you want to be precise
+
+%---------------------------------------------------------------------------
+%	ABSTRACT SECTION
+%---------------------------------------------------------------------------
+\begin{abstract}
+The goal of this paper is to look at the Windows and FreeBSD operating systems and compare their similarities and differences to the Linux operating system. These operating systems are compared based on how they handle memory management.
+\end{abstract}
+
+\vfill % Fill the rest of the page with whitespace
+
+\pagebreak
+
+\end{titlepage}
+
+\setlength{\parindent}{3ex}
+
+\section{Introduction}
+Some of the fundemental concepts of an operating system is how it handles memory management. In general, data is loaded from disk into main memory in what are known as pages. A page is a contiguous block of virtual memory. By loading memory this way, the number of disk I/O needed is greatly reduced. In this paper, I will take a closer look at how this concept is implemented in both the Windows and FreeBSD operating systems. I will then examine the ways in which each compares to Linux.
+
+\section{Windows}
+
+\subsection{Memory Management}
+The Windows memory manager has two primary tasks. First, it is tasked with mapping a processes virual address space into physical memory. Second, it is tasked with paging some of the contents of memory to disk when the system tries to use more virtual memory than there is physical memory on the system. The memory manager consists of a number of components. These components include executive system services for allocating and deallocating memory, managing virtual memory, resolving hardware memory management exceptions, the balance set manager, the process/stack swapper, the modifier page writer, the mapper page writer, the segment deference thread, and the zero page thread.\cite{2ris12}
+
+The Windows virtual address space is divided into what are known as pages. A page is the smallest unit of protection at the hardware level. There are two supported page sizes: large and small. On x64 architecture, this is 4KB for small pages and 2MB for large pages. Large pages have the advantage of speed of address translation. This is due to large pages allowing for a smaller translation look-aside buffer to be used, resulting in faster lookup times.However, large pages due have a downside. Each page must be mapped with a single protection that applies to the entire page. Since large pages are more likely to contain both read and write data, they will often be marked for read/write permissions. This means that device drivers code could modify read-only operating system or driver code without causing a memory access violation.\cite{2ris12}
+
+Pages in the Windows process virtual address space can be either free, reserved, committed, or shareable. Committed pages are also known as private pages. This means that a committed page cannot be shared with other processes. Windows uses the VirtualAlloc, VirtualAllocEx, and VirtualAllocExNuma functions in order to reserve address space and then commit that reserved address space. Reserved address space is a special intermediate state that allows a thread to set aside a range of contiguous virtaul addresses for possible future use. Examples of this would be an array.\cite{2ris12}
+
+Windows provides a mechanism to share memory among processes and the operating system. This is known as Shared memory. Shared memory is memory that is visible to more than one process and is present in more than one process virtual address space. The primative data structures used to implement shared memory are called section objects. A section object is connected to either an open file on disk or to committed memory. Section objects are created by calls to the Windows CreateFileMapping or CreateFileMappingNuma functions. Windows can use these mapped files to conveniently perform I/O operations to files by making them appear in their address space.\cite{2ris12}
+
+Windows provides memory protection in order to prevent user processes from inadvertently or deliberately corrupting the address space of another processes or other part of the operating system. There are four primary ways in which Windows does this. First, all system wide data structures and memory pools used by the kernel can only be accessed while in kernel mode. This prevents user mode threads from accessing kernel pages. Second, each process has a separate, private address space. This address space is protected from being accessed by another thread from another process. Third, all processors supported by Windows provide some form of hardware controlled memory protection. Finally, shared memory objects have what are known as access control lists, which are checked when processes attempt to open section objects.\cite{2ris12}
+
+\section{FreeBSD}
+
+\subsection{Memory Management}
+FreeBSD implements a private address space for each of its processes. This address space is divided into three parts: text, data, and stack. The text segment is read-only machine instructions of the program. It is where the programs code is stored and pulled during execution. The data and stack portions are read and writable. The data segment contains initialized and uninitialized data of the program. The stack segment contains the run-time stack of the program.\cite{mn15}
+
+FreeBSD implements the mmap() function, which allows unrelated processes to request a shared mapping of a file into their address spaces. This allows multiple processes to map a file into their address spaces, and see that file updated when changes are made to it. These changes are reflected across every process that has the file mapped.\cite{mn15}
+
+FreeBSD provides a general memory allocator which is similar to the C functions malloc() and free(). These are used to reduce the complexity of writing code inside the kernel. The allocation routine takes a parameter specifying the size of memory that is needed and allocates it without paging. The free routine takes a pointer to the storage being freed, and does not require the size of the storage. These proceedures are known as zalloc() and zfree().\cite{mn15}
+
+\section{Comparisons to Linux}
+
+In Linux, the kernel represents every physical page on the system with a struct page structure. This structure contains flags for storing the status of a page, usage count of the page, the pages virtual address, and other important pieces of metadata about the page. The kernel uses this structure to keep track of all the pages in the system. The kernel needs to known when a page is free and who owns which page.\cite{l05}
+
+\begin{figure}[H]
+   \input{__page.c.tex}
+   \caption{This is an example of the struct page data structure of the Linux kernel. It keeps of every physical page on the system. On a 4GB system with 524,288 processes, this struct takes up about 20MB of space.}
+\end{figure}
+
+Due to hardware constraints, the Linux kernel cannot treat all pages as identical. To that end, Linux implements what are known as page zones. Linux has four different page zones: ZONE\_DMA, which are pages that can undergo DMA; ZONE\_DMA32, which are pages that can undergo DMA and are accessible only by 32-bit devices; ZONE\_NORMAL, which are normal pages; and ZONE\_HIGHMEM, which are pages that are not permanently mapped into the kernel's address space. \cite{l05}
+
+\begin{figure}[H]
+   \input{__zone.c.tex}
+   \caption{This is an example of the struct zone data structure. It contains all the metadata on a zone.}
+\end{figure}
+
+\section{Conclusion}
+In conclusion, Windows, FreeBSD and Linux all implement memory management using a similar approach. Memory management is an important concept within kernel development. All three operating systems had a similar approach in how they paged data from disk to main memory for later use. They way in which they differ is the inner structures that handle the meta data of the processes page. Additionlly, each operating system also had a different way of handling shared address space between processes.
+
+\vfill
+
+\pagebreak
+
+\bibliographystyle{IEEEtran}
+
+\bibliography{sources}
+
+\end{document}

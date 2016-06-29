@@ -1,0 +1,28 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PY{k}{struct} \PY{n}{zone} \PY{p}{\PYZob{}}
+	\PY{k+kt}{unsigned} \PY{k+kt}{long} \PY{n}{watermark}\PY{p}{[}\PY{n}{NR\PYZus{}WMARK}\PY{p}{]}\PY{p}{;}
+	\PY{k+kt}{unsigned} \PY{k+kt}{long} \PY{n}{lowmem\PYZus{}reserve}\PY{p}{[}\PY{n}{MAX\PYZus{}NR\PYZus{}ZONES}\PY{p}{]}\PY{p}{;}
+	\PY{k}{struct} \PY{n}{per\PYZus{}cpu\PYZus{}pageset} \PY{n}{pageset}\PY{p}{[}\PY{n}{NR\PYZus{}CPUS}\PY{p}{]}\PY{p}{;}
+	\PY{n}{spinlock\PYZus{}t} \PY{n}{lock}\PY{p}{;}
+   	\PY{k}{struct} \PY{n}{free\PYZus{}area} \PY{n}{free\PYZus{}area}\PY{p}{[}\PY{n}{MAX\PYZus{}ORDER}\PY{p}{]}
+  	\PY{n}{spinlock\PYZus{}t} \PY{n}{lru\PYZus{}lock}\PY{p}{;}
+   	\PY{k}{struct} \PY{n}{zone\PYZus{}lru} \PY{p}{\PYZob{}}
+   		\PY{k}{struct} \PY{n}{list\PYZus{}head} \PY{n}{list}\PY{p}{;}
+   		\PY{k+kt}{unsigned} \PY{k+kt}{long} \PY{n}{nr\PYZus{}saved\PYZus{}scan}\PY{p}{;}
+   	\PY{p}{\PYZcb{}} \PY{n}{lru}\PY{p}{[}\PY{n}{NR\PYZus{}LRU\PYZus{}LISTS}\PY{p}{]}\PY{p}{;}
+   	\PY{k}{struct} \PY{n}{zone\PYZus{}reclaim\PYZus{}stat} \PY{n}{reclaim\PYZus{}stat}\PY{p}{;}
+	\PY{k+kt}{unsigned} \PY{k+kt}{long} \PY{n}{pages\PYZus{}scanned}\PY{p}{;}
+	\PY{k+kt}{unsigned} \PY{k+kt}{long} \PY{n}{flags}\PY{p}{;}
+   	\PY{n}{atomic\PYZus{}long\PYZus{}t} \PY{n}{vm\PYZus{}stat}\PY{p}{[}\PY{n}{NR\PYZus{}VM\PYZus{}ZONE\PYZus{}STAT\PYZus{}ITEMS}\PY{p}{]}\PY{p}{;}
+   	\PY{k+kt}{int} \PY{n}{prev\PYZus{}priority}\PY{p}{;}
+   	\PY{k+kt}{unsigned} \PY{k+kt}{int} \PY{n}{inactive\PYZus{}ratio}\PY{p}{;}
+   	\PY{n}{wait\PYZus{}queue\PYZus{}head\PYZus{}t} \PY{o}{*}\PY{n}{wait\PYZus{}table}\PY{p}{;}
+   	\PY{k+kt}{unsigned} \PY{k+kt}{long} \PY{n}{wait\PYZus{}table\PYZus{}hash\PYZus{}nr\PYZus{}entries}\PY{p}{;}
+   	\PY{k+kt}{unsigned} \PY{k+kt}{long} \PY{n}{wait\PYZus{}table\PYZus{}bits}\PY{p}{;}
+   	\PY{k}{struct} \PY{n}{pglist\PYZus{}data} \PY{o}{*}\PY{n}{zone\PYZus{}pgdat}\PY{p}{;}
+   	\PY{k+kt}{unsigned} \PY{k+kt}{long} \PY{n}{zone\PYZus{}start\PYZus{}pfn}\PY{p}{;}
+   	\PY{k+kt}{unsigned} \PY{k+kt}{long} \PY{n}{spanned\PYZus{}pages}\PY{p}{;}
+   	\PY{k+kt}{unsigned} \PY{k+kt}{long} \PY{n}{present\PYZus{}pages}\PY{p}{;}
+   	\PY{k}{const} \PY{k+kt}{char} \PY{o}{*}\PY{n}{name}\PY{p}{;}
+\PY{p}{\PYZcb{}}\PY{p}{;}
+\end{Verbatim}

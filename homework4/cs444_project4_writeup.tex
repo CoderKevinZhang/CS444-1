@@ -1,0 +1,133 @@
+\documentclass[journal,letterpaper,draftclsnofoot,onecolumn,10pt]{IEEEtran}
+
+\usepackage{graphicx}                                        
+\usepackage{amssymb}                                         
+\usepackage{amsmath}                                         
+\usepackage{amsthm}                                          
+
+\usepackage{alltt}                                           
+\usepackage{float}
+\usepackage{color}
+\usepackage{url}
+
+\usepackage{balance}
+\usepackage[TABBOTCAP, tight]{subfigure}
+\usepackage{enumitem}
+\usepackage{pstricks, pst-node}
+
+\usepackage{geometry}
+\geometry{textheight=8.5in, textwidth=6in}
+
+\newcommand{\cred}[1]{{\color{red}#1}}
+\newcommand{\cblue}[1]{{\color{blue}#1}}
+
+\usepackage{hyperref}
+
+\def\name{Dylan Camus}
+
+%pull in the necessary preamble matter for pygments output
+\input{pygments.tex}
+
+% The following metadata will show up in the PDF properties
+\hypersetup{
+   colorlinks = false,
+   urlcolor = black,
+   pdfauthor = {\name},
+   pdfkeywords = {cs444 ``operating systems'' ``project 4''},
+   pdftitle = {CS 444 Project 4 Writeup},
+   pdfsubject = {CS 444 Project 4 Writeup},
+   pdfpagemode = UseNone
+}
+
+\parindent = 0.0 in
+\parskip = 0.1 in
+
+\begin{document}
+\begin{titlepage}
+
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % Defines a new command for the horizontal lines, change thickness here
+
+\center % Center everything on the page
+ 
+%---------------------------------------------------------------------------
+%	HEADING SECTIONS
+%---------------------------------------------------------------------------
+
+\textsc{\LARGE Oregon State University}\\[1.5cm] % Name of your university/college
+\textsc{\Large Operating Systems II}\\[0.5cm] % Major heading such as course name
+\textsc{\large CS444}\\[0.5cm] % Minor heading such as course title
+
+%---------------------------------------------------------------------------
+%	TITLE SECTION
+%---------------------------------------------------------------------------
+
+\HRule \\[0.4cm]
+{ \huge \bfseries Project 4 Writeup}\\[0.4cm] % Title of your document
+\HRule \\[1.5cm]
+ 
+%---------------------------------------------------------------------------
+%	AUTHOR SECTION
+%---------------------------------------------------------------------------
+
+\begin{minipage}{0.4\textwidth}
+   \begin{flushleft} \large
+      \emph{Author:}\\
+      Dylan \textsc{Camus} % Your name
+   \end{flushleft}
+\end{minipage}
+~
+\begin{minipage}{0.4\textwidth}
+   \begin{flushright} \large
+      \emph{Professor:} \\
+      Prof. Kevin \textsc{McGrath} % Supervisor's Name
+   \end{flushright}
+\end{minipage}\\[4cm]
+
+% If you don't want a supervisor, uncomment the two lines below and remove the section above
+%\Large \emph{Author:}\\
+%John \textsc{Smith}\\[3cm] % Your name
+
+%---------------------------------------------------------------------------
+%	DATE SECTION
+%---------------------------------------------------------------------------
+
+{\large \today}\\[3cm] % Date, change the \today to a set date if you want to be precise
+
+%---------------------------------------------------------------------------
+%	ABSTRACT SECTION
+%---------------------------------------------------------------------------
+\begin{abstract}
+This project involved the use of a SLOB. Specifically, a SLOB algorithm was developed that used the best fit algorithm for allocation. This reduced overall data fragmentation. This algorithm was tested against the default first fit algorithm.
+\end{abstract}
+
+\vfill % Fill the rest of the page with whitespace
+
+\pagebreak
+
+\end{titlepage}
+
+\section{Design}
+The only thing that needed to be changed within the slob.c file really was the allocation algorithm. I modified it so that it first finds the smallest page that fits the need. This reduces fragmentation.
+\section{Questions}
+\subsection{What do you think the main point of this assignment is?}
+I think the main point of the assignment was to learn how to work with memory and pages within the kernel and to understand how to create and use system calls in the kernel.
+\subsection{How did you personally approach the problem? Design decisions, algorithm, etc.}
+I approached the problem by researching how the SLOB was implemented. Once I had a solid base of knowledge, there were only really 20 - 30 lines of code that needed to be written. The main problem I had was the system calls. I had to find where in the Linux structure they were defined and how to make my own, and how to make sure they correlated with the code I wrote in slob.c.
+\subsection{How did you ensure your solution was correct? Testing details, for instance.}
+I ensured my solution was correct testing for fragmentation with both algorithms. I noticed that my algorithm had around half as much fragmentation as the first fit algorithm. My system calls calculated the average memory claimed in the slob and the average memory free. The best fit algorithm on average had half as much memory claimed, which means that it was allocating it's memory more efficiently.
+\subsection{What did you learn?}
+I think that I learned a lot about Linux system calls and how memory is managed in the kernel. I learned about the tradeoffs of fragmentation vs. effeciency.
+
+\section{Work Log}
+
+\begin{figure}[H]
+   \begin{tabular}{c | c | c}
+      Date & Hours & Detail\\
+      \hline
+      6/03 & 6 & Got best fit algorithm running and tested code.\\
+      \hline
+   \end{tabular}
+   \caption{Dates and number of hours spent working on project 2}
+\end{figure}
+      
+\end{document}

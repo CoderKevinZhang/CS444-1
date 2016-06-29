@@ -1,0 +1,12 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PY{k}{struct} \PY{n}{page} \PY{p}{\PYZob{}}
+   	\PY{k+kt}{unsigned} \PY{k+kt}{long} \PY{n}{flags}\PY{p}{;}
+	\PY{n}{atomic\PYZus{}t} \PY{n}{\PYZus{}count}\PY{p}{;}
+   	\PY{n}{atomic\PYZus{}t} \PY{n}{\PYZus{}mapcount}\PY{p}{;}
+	\PY{k+kt}{unsigned} \PY{k+kt}{long} \PY{n}{private}\PY{p}{;}
+	\PY{k}{struct} \PY{n}{address\PYZus{}space} \PY{o}{*}\PY{n}{mapping}\PY{p}{;}
+	\PY{n}{pgoff\PYZus{}t} \PY{n}{index}\PY{p}{;}
+	\PY{k}{struct} \PY{n}{list\PYZus{}head} \PY{n}{lru}\PY{p}{;}
+	\PY{k+kt}{void} \PY{o}{*}\PY{k}{virtual}\PY{p}{;}
+\PY{p}{\PYZcb{}}\PY{p}{;}
+\end{Verbatim}

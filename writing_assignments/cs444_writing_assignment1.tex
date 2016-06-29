@@ -1,0 +1,170 @@
+\documentclass[journal,letterpaper,draftclsnofoot,onecolumn,10pt]{IEEEtran}
+
+\usepackage{graphicx}                                        
+\usepackage{amssymb}                                         
+\usepackage{amsmath}                                         
+\usepackage{amsthm}                                          
+
+\usepackage{alltt}                                           
+\usepackage{float}
+\usepackage{color}
+\usepackage{url}
+
+\usepackage{balance}
+\usepackage[TABBOTCAP, tight]{subfigure}
+\usepackage{enumitem}
+\usepackage{pstricks, pst-node}
+
+\usepackage{geometry}
+\geometry{textheight=8.5in, textwidth=6in}
+
+\newcommand{\cred}[1]{{\color{red}#1}}
+\newcommand{\cblue}[1]{{\color{blue}#1}}
+
+\usepackage{hyperref}
+
+\def\name{Dylan Camus}
+
+%pull in the necessary preamble matter for pygments output
+\input{pygments.tex}
+
+% The following metadata will show up in the PDF properties
+\hypersetup{
+   colorlinks = false,
+   urlcolor = black,
+   pdfauthor = {\name},
+   pdfkeywords = {cs444 ``operating systems'' writing},
+   pdftitle = {CS 444 Writing Assignment 1},
+   pdfsubject = {CS 444 Writing Assignment 1},
+   pdfpagemode = UseNone
+}
+
+\parindent = 0.0 in
+\parskip = 0.1 in
+
+\begin{document}
+\begin{titlepage}
+
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % Defines a new command for the horizontal lines, change thickness here
+
+\center % Center everything on the page
+ 
+%---------------------------------------------------------------------------
+%	HEADING SECTIONS
+%---------------------------------------------------------------------------
+
+\textsc{\LARGE Oregon State University}\\[1.5cm] % Name of your university/college
+\textsc{\Large Operating Systems II}\\[0.5cm] % Major heading such as course name
+\textsc{\large CS444}\\[0.5cm] % Minor heading such as course title
+
+%---------------------------------------------------------------------------
+%	TITLE SECTION
+%---------------------------------------------------------------------------
+
+\HRule \\[0.4cm]
+{ \huge \bfseries Comparing Processes, Threads, and CPU Scheduling of Windows and FreeBSD to Linux}\\[0.4cm] % Title of your document
+\HRule \\[1.5cm]
+ 
+%---------------------------------------------------------------------------
+%	AUTHOR SECTION
+%---------------------------------------------------------------------------
+
+\begin{minipage}{0.4\textwidth}
+   \begin{flushleft} \large
+      \emph{Author:}\\
+      Dylan \textsc{Camus} % Your name
+   \end{flushleft}
+\end{minipage}
+~
+\begin{minipage}{0.4\textwidth}
+   \begin{flushright} \large
+      \emph{Professor:} \\
+      Dr. Kevin \textsc{McGrath} % Supervisor's Name
+   \end{flushright}
+\end{minipage}\\[4cm]
+
+% If you don't want a supervisor, uncomment the two lines below and remove the section above
+%\Large \emph{Author:}\\
+%John \textsc{Smith}\\[3cm] % Your name
+
+%---------------------------------------------------------------------------
+%	DATE SECTION
+%---------------------------------------------------------------------------
+
+{\large \today}\\[3cm] % Date, change the \today to a set date if you want to be precise
+
+%---------------------------------------------------------------------------
+%	ABSTRACT SECTION
+%---------------------------------------------------------------------------
+\begin{abstract}
+The goal of this paper is to look at the Windows and FreeBSD operating systems and compare their similarities and differences to the Linux operating system. These operating systems are compared based on three catagories. These catagories are processes, threads, and CPU schedulers.
+\end{abstract}
+
+\vfill % Fill the rest of the page with whitespace
+
+\pagebreak
+
+\end{titlepage}
+
+\setlength{\parindent}{3ex}
+
+\section{Introduction}
+Some of the fundemental concepts of an operating system is how it handles processes, threads, and the scheduling of the CPU. In this paper, I will take a closer look at how these concepts are implemented in both the Windows and FreeBSD operating systems. I will then examine the ways in which each compares to Linux.
+
+\section{Windows}
+
+\subsection{Processes}
+Every Windows process is represented by what is known as an EPROCESS. The EPROCESS is a collection of pointers to other data structures. These data structures live in system address space. Every process is encapsulated as a process object by the executive object manager. Process objects are made up of EPROCESS data structure. The EPROCESS data structure has a large number of fields, such as the process id, memory management information, flags and counters, just to name a few. The first field of an EPROCESS, the process control block, is made up of a KPROCESS. The KPROCESS is a data structure used for kernel operations, such as the dispatcher, scheduler, and interupt code.\cite{1ris12}
+
+In addition to the EPROCESS and KPROCESS structures, windows also has a process structure that is specific to the Windows subsystem known as the CSR\_PROCESS. This process contains session data, process links, thread data, and client data. Finally, the last process structure is the W32PROCESS. This process is what stores the information about GUI processes. It contains flags and pointers needed for Windows graphics.\cite{1ris12}
+
+The creation of a Windows process consists of multiple stages across three different parts of the Windows operating system: the Windows client-side library, the Windows executive, and the Windows subsystem process. The first step of creating a process in Windows is to parse, validate, and convert the parameters, flags, and attribute list. Then, the executable image file is opened. Windows then creates an executive process object and creates an initial thread. Then, subsystem-specific process initialization is carried out. Finally, the initial thread begins executing and the initialization of the address space completes.\cite{1ris12}
+\subsection{Threads}
+Similar to how Windows processes are represented by a EPROCESS structure, threads in Windows are represented by an ETHREAD structure, which in itself contains a KTHREAD structure as it's first member. Similarly, the ETHREAD structure and the structures it points to live in system address space, except the thread environment block, which is of type KTHREAD and therefore lives in process address space because user-mode components need to access it. Finally, continuing to mirror the structure of processes, the Windows subsystem process has a parallel structure for every thread called a CSR\_THREAD, and GUI processes have a W32THREAD that is pointed to by the KTHREAD.\cite{1ris12}
+
+While, the structure of threads is very similar to that of processes, they are in fact created a little differently. First, the CreateThread function is called which converts Windows API flags and creates a native structure of object parameters. Then an attribute list is created with the client ID and thread information block address. Then NtCreateThreadEx is called to capture the attribute list. PspCreateThread is then called to create the thread object in a suspended state. CreateThread then checks if the activation stack needs to be activated and activates it if necessary. Following this, Windows subsystem is notified about the new thread and begins setup on it. Finally, thread ID and handle are returned and the thread is scheduled for execution.\cite{1ris12}
+\subsection{CPU Scheduling}
+The Windows CPU scheduler is a priority based preemptive system. One of the main concepts of this scheduler is what is known as processor affinity. Processor affinity refers to the rule that at least one highest priority thread will always be running. However, these processes may be limited by the processor on which they run on. These limitations are dectated by the threads processor group. Processes run for a length of time known as a quantum, which is determend by system configuration settings, whether the process is foreground or background, and whether the quantum has been altered by the job object. Once a process has run for it's quantum, another thread of the same priority is then allowed to run. However, threads may be interupted before they finish running for their quantum because Windows CPU schedular is preemptive. A thread is preempted when another thread of higher priority becomes runnable.\cite{1ris12}
+
+Windows has no single schedular. Instead, scheduling is spread all over the kernel and handled by the kernel's dispatcher. Threads may require dispatching when a new thread becomes runnable, a thread stops running, a thread's priority changes, or a thread's processor affinity changes. Once one of these events occur, Windows will determine which logical proccessor the thread should run on and perform a context switch, which is when the old thread's state is saved and the new threads state is loaded to the processor.\cite{1ris12}
+
+Windows uses a 32 level priority system for determining which processes run first. The number on the priority scale is determined by both the processes priority class and its relative priority. Priority in the range 16-31 is considered real time priority, while priority 0-15 is called the dynamic range. The priority of certain threads is occasionally boosted to increase responsiveness and reduce starvation.\cite{1ris12}
+
+\section{FreeBSD}
+
+\subsection{Processes}
+Processes in FreeBSD operate in either user mode or kernel mode. In user mode, the process executes application code in a nonprivileged mode. When the process requires services from the operating system through a system call, the process switches to kernel mode, where is receives privileged access to the kernel resources. These resources include registers, the program counter, and the stack pointer.
+\subsection{CPU Scheduling}
+FreeBSD uses a priority based scheduler that is biased to favor interactive programs. These programs tend to wait on I\\O and therefore are often blocking. It does this by reducing priority of threads that execute over their entire timeslice, and allowing those that execute over only part of it, such as those waiting on I\\O, to remain at the same priority.\cite{mn15}
+
+\section{Comparisons to Linux}
+
+\subsection{Windows}
+Processes, threads, and the CPU scheduler are implemented much differently in Linux than in Windows. In Windows, a process was a combination of an EPROCCESS, the KPROCESS defined within the EPROCESS, the CRS\_PROSSES, and the W32PROCESS. In Linux, processes are much simpler. A process is is stored within a doubly linked list known as the task list, which is made up of nodes of type struct task\_struct.\cite{l05}
+
+\begin{figure}[h]
+\input{__thread_info_example.c.tex}
+\caption{The structure of a node of the task list in Linux}
+\end{figure}
+
+Processes in Linux are also created in a much simpler way than in Windows. A process in Windows has to be initialized by many different parts of the Windows kernel. However, in Linux, a process is created by a simple call to fork(), which is a system call that duplicates the calling process, creating a child process which is the same except for it has a different process id. After a fork() call, the process will then usually call the exec() system call to execute a different process. All processes in Linux derive from the init process, which has a process id of 1.\cite{l05}
+
+Windows and Linux also differ drastically in how they handle threads. In Windows, threads are handled by explicit kernel functions, while in Linux, threads are not created with any distinction from processes, they just share resources with their parent process.\cite{l05}
+
+The CPU schedulers of Windows and Linux are, however, somewhat similar in that they are both priority based schedulers. Where Windows' scheduler was based on a 32 point priority scale, Linux uses two seperate priority values, first, it has the niceness value, which ranges from -20 to 19, and the other range is the real-time priority.\cite{l05}
+
+\subsection{FreeBSD}
+FreeBSD, on the other hand, is very similar to Linux. This is due to the fact that FreeBSD is also based on Unix. The main differences between FreeBSD and Linux is in the CPU scheduler. FreeBSD uses a scheduler that prioritizes I\\O, while Linux uses a more round robin approach.
+
+\section{Conclusion}
+In conclusion, Windows is very different from Linux, while FreeBSD shares many similarities. This is easy to see in how the operating systems handle processes, threads, and CPU scheduling. Where as Windows tends to have plenty of seperation across different areas of the kernel, Linux and FreeBSD tends to be centralized and straight forward in it's approach.
+
+\vfill
+
+\pagebreak
+
+\bibliographystyle{IEEEtran}
+
+\bibliography{sources}
+
+\end{document}
